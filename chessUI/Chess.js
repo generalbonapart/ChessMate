@@ -1,11 +1,23 @@
 let moveHistory = [];
+const moveHistoryDisplay = document.getElementById('moveHistory');
+function updateMoveHistoryDisplay() {
+    // Clear existing content
+    moveHistoryDisplay.innerHTML = '';
+
+    // Iterate through move history and append each move to the display
+    moveHistory.forEach((move, index) => {
+        const moveText = `${index + 1}. ${move.piece} from ${move.start} to ${move.end} \n` ;
+        const moveElement = document.createElement('p');
+        moveElement.textContent = moveText;
+        moveHistoryDisplay.appendChild(moveElement);
+        moveElement.style.marginBottom = '5px'; // Adjust the spacing as needed
+    });
+}
 
 // Function to save a move to the move history
 function saveMoveHistory(start, end, piece) {
     moveHistory.push({ start: start, end: end, piece: piece });
-    console.log(start)
-    console.log(end)
-    console.log(piece)
+    updateMoveHistoryDisplay()
 }
 
 
