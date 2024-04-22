@@ -1,3 +1,13 @@
+let moveHistory = [];
+
+// Function to save a move to the move history
+function saveMoveHistory(start, end, piece) {
+    moveHistory.push({ start: start, end: end, piece: piece });
+    console.log(start)
+    console.log(end)
+    console.log(piece)
+}
+
 
 function insertImage() {
 
@@ -19,7 +29,6 @@ function insertImage() {
     })
 }
 insertImage()
-
 //Coloring
 
 function coloring() {
@@ -121,7 +130,8 @@ document.querySelectorAll('.box').forEach(item => {
                 if (i.style.backgroundColor == 'lightgreen') {
                     pinkId = i.id
                     pinkText = i.innerText
-
+                    nextId = item.id
+                    saveMoveHistory(pinkId, item.id, pinkText)
                     document.getElementById(pinkId).innerText = ''
                     item.innerText = pinkText
                     coloring()
@@ -588,6 +598,7 @@ document.querySelectorAll('.box').forEach(item => {
                 item2.addEventListener('click', function () {
 
                     getId = item2.id
+
                     arr = Array.from(getId)
                     arr.shift()
                     aside = eval(arr.pop())
@@ -598,7 +609,7 @@ document.querySelectorAll('.box').forEach(item => {
                     if (item2.style.backgroundColor == 'limegreen' && item2.innerText.length == 0) {
 
                         if (pinkText == `Wpawn` && aup == 800) {
-
+                            saveMoveHistory(pinkId, getId, pinkText)
                             document.getElementById(`b${a}`).innerText = 'Wqueen'
                             document.getElementById(pinkId).innerText = ''
                             coloring()
@@ -606,7 +617,7 @@ document.querySelectorAll('.box').forEach(item => {
 
                         }
                         else if (pinkText == `Bpawn` && aup == 100) {
-
+                            saveMoveHistory(pinkId, getId, pinkText)
                             document.getElementById(`b${a}`).innerText = 'Bqueen'
                             document.getElementById(pinkId).innerText = ''
                             coloring()
@@ -615,8 +626,7 @@ document.querySelectorAll('.box').forEach(item => {
                         }
                         else {
 
-
-
+                            saveMoveHistory(pinkId, getId, pinkText)
                             document.getElementById(pinkId).innerText = ''
                             item2.innerText = pinkText
                             coloring()
