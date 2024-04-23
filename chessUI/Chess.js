@@ -6,7 +6,7 @@ function updateMoveHistoryDisplay() {
 
     // Iterate through move history and append each move to the display
     moveHistory.forEach((move, index) => {
-        const moveText = `${index + 1}. ${move.piece} from ${move.start} to ${move.end} \n` ;
+        const moveText = `${index + 1}. ${move.piece}    ${move.start}-${move.end} \n` ;
         const moveElement = document.createElement('p');
         moveElement.textContent = moveText;
         moveHistoryDisplay.appendChild(moveElement);
