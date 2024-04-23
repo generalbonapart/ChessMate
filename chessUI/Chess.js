@@ -141,9 +141,10 @@ document.querySelectorAll('.box').forEach(item => {
             document.querySelectorAll('.box').forEach(i => {
                 if (i.style.backgroundColor == 'lightgreen') {
                     pinkId = i.id
+                    pinkSqaure = i.dataset.square
                     pinkText = i.innerText
-                    nextId = item.id
-                    saveMoveHistory(pinkId, item.id, pinkText)
+                    nextSquare = item.dataset.square
+                    saveMoveHistory(pinkSqaure, nextSquare, pinkText)
                     document.getElementById(pinkId).innerText = ''
                     item.innerText = pinkText
                     coloring()
@@ -603,6 +604,7 @@ document.querySelectorAll('.box').forEach(item => {
         if (item.style.backgroundColor == 'lightgreen') {
 
             pinkId = item.id
+            pinkSquare = item.dataset.square
             pinkText = item.innerText
 
             document.querySelectorAll('.box').forEach(item2 => {
@@ -610,7 +612,7 @@ document.querySelectorAll('.box').forEach(item => {
                 item2.addEventListener('click', function () {
 
                     getId = item2.id
-
+                    nextSquare = item2.dataset.square
                     arr = Array.from(getId)
                     arr.shift()
                     aside = eval(arr.pop())
@@ -621,7 +623,7 @@ document.querySelectorAll('.box').forEach(item => {
                     if (item2.style.backgroundColor == 'limegreen' && item2.innerText.length == 0) {
 
                         if (pinkText == `Wpawn` && aup == 800) {
-                            saveMoveHistory(pinkId, getId, pinkText)
+                            saveMoveHistory(pinkSquare, nextSquare, pinkText)
                             document.getElementById(`b${a}`).innerText = 'Wqueen'
                             document.getElementById(pinkId).innerText = ''
                             coloring()
@@ -629,7 +631,7 @@ document.querySelectorAll('.box').forEach(item => {
 
                         }
                         else if (pinkText == `Bpawn` && aup == 100) {
-                            saveMoveHistory(pinkId, getId, pinkText)
+                            saveMoveHistory(pinkSquare, nextSquare, pinkText)
                             document.getElementById(`b${a}`).innerText = 'Bqueen'
                             document.getElementById(pinkId).innerText = ''
                             coloring()
@@ -638,7 +640,7 @@ document.querySelectorAll('.box').forEach(item => {
                         }
                         else {
 
-                            saveMoveHistory(pinkId, getId, pinkText)
+                            saveMoveHistory(pinkSquare, nextSquare, pinkText)
                             document.getElementById(pinkId).innerText = ''
                             item2.innerText = pinkText
                             coloring()
