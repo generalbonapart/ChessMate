@@ -9,7 +9,7 @@ USER_API_TOKEN = 'lip_HaJoxjLLofX2FRgDJlBD'
 turn = 'white'
 prev_size = 0
 
-
+#Doc: https://berserk.readthedocs.io/en/master/api.html#module-berserk.clients
 
 def get_game_moves(game_id):
     game = lichess.api.game(game_id)
@@ -24,17 +24,33 @@ def save_moves_to_file(moves, file_path):
 # Function to create a new game with a bot
 def create_new_game_with_bot():
     # Parameters for creating a new game
-    username = "automatechessmate"
-    rated = False  # Set to True for a rated game, False for an unrated game
-    clock_limit = 3
-    clock_increment = 3
-    days = 0
-    color = "random"  # Choose color randomly (can also be "white" or "black")
-    variant = "standard"  # Chess variant (standard, chess960, etc.)
-    token = "lip_OOb8ZjPb0XzdGP8tL6Zz" # bots token
-    level= 3  # Bot level (ranges from 1 to 8, with 1 being the easiest and 8 being the hardest)
-    response = client.challenges.create_with_accept(username=username, rated=rated, token=token, clock_limit=180, clock_increment=20, days = None, color = 'white', variant=variant, position=None)
-    game_id = response['challenge']['id']
+#     parameters = {
+#     "username": "automatechessmate",
+#     "rated": False,              # Set to True for a rated game, False for an unrated game
+#     "clock_limit": 180,         # Time limit for each player in seconds
+#     "clock_increment": 20,      # Time increment per move in seconds
+#     "days": None,               # Number of days the challenge is valid (None for no limit)
+#     "color": "white",          # Choose color randomly (can also be "white" or "black")
+#     "variant": "standard",      # Chess variant (standard, chess960, etc.)
+#     "token": "lip_OOb8ZjPb0XzdGP8tL6Zz"   # Bot's token
+# }
+
+    parameters = {
+    #"username": "automatechessmate",
+    #"rated": False,              # Set to True for a rated game, False for an unrated game
+    "clock_limit": 180,         # Time limit for each player in seconds
+    "clock_increment": 20,      # Time increment per move in seconds
+    "days": None,               # Number of days the challenge is valid (None for no limit)
+    "color": "white",          # Choose color randomly (can also be "white" or "black")
+    "variant": "standard",      # Chess variant (standard, chess960, etc.)
+    #"token": "lip_OOb8ZjPb0XzdGP8tL6Zz"   # Bot's token
+    "level" : "2"
+}
+    
+    #response = client.challenges.create_with_accept(username=username, rated=rated, token=token, clock_limit=180, clock_increment=20, days = None, color = 'white', variant=variant, position=None)
+    #response = client.challenges.create_with_accept(**parameters)
+    response = client.challenges.create_ai(**parameters)
+    game_id = response['id']
     return game_id
 
 
