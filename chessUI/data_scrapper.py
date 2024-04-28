@@ -64,91 +64,113 @@ def get_color(update):
     if update["game"] :
         return update["game"]["color"]
 
-#stream incoming events
-# def add_last_move_to_csv():
-#     lock.acquire()
-#     while(game_not_over):
-#         print("----------inside csv function ----------------")
-#         for update in client.board.stream_incoming_events():
-#             if update["game"]:
-#                 with open('game_history.csv', 'w', newline='') as file:
-#                     curr_move = [update["game"]["lastMove"]]
-#                     if(curr_move and move_history[-1] != curr_move):
-#                         move_history.append(curr_move)
-#                         writer = csv.writer(file)
-#                         writer.writerow(curr_move)
-#         time.sleep(2)
-#     lock.release()
 
-# use stream_incoming_events()
 def is_my_turn(update):
     if update["game"]:
         return update["game"]["isMyTurn"]
     else:
         return False
-    
-def post_user_moves():
+
+def add_last_move_to_csv(stop_threads): 
+    global game_not_over, move_history 
+    # lock.acquire()
+    while(game_not_over): 
+        if stop_threads():
+            break     
+        for update in client.board.stream_incoming_events():
+            if update["game"]:
+                curr_move = update["game"]["lastMove"]
+                if(curr_move and (move_history[-1] != curr_move)):
+                    move_history.append(curr_move)
+                    with open('game_history.csv', 'a', newline='') as file:
+                        writer = csv.writer(file) 
+                        writer.writerow([curr_move])
+                    #time.sleep(1)
+                    break
+            time.sleep(2)
+    # lock.release()
+    # time.sleep(3)                
+
+
+def post_user_moves(stop_threads):
     global game_id, game_not_over, lock
-    lock.acquire() 
-    while(game_not_over):        
+    #lock.acquire() 
+    while(game_not_over):
+        if stop_threads():
+            break        
         for update in client.board.stream_incoming_events():
             if (is_my_turn(update) and not user_moves.empty() and game_not_over):
                 time.sleep(5)
                 print(f"Posting Move {user_moves.queue[0]}")
                 client.board.make_move(game_id,user_moves.get())
                 break
+            time.sleep(3)
     time.sleep(2)
-    lock.release()
+    #lock.release()
 
-def add_moves_to_queue(input_user_moves):
-    print("Inside add moves-----------")
+def add_moves_to_queue(input_user_moves, stop_threads):
     global user_move_index, game_not_over
     while((user_move_index < len(input_user_moves)) and game_not_over):
+        if stop_threads():
+            break
         user_moves.put(input_user_moves[user_move_index])
         print("Q so far :", user_moves.queue[0])
         user_move_index += 1
         time.sleep(3)
     
-
+def clear_file(file_path):
+    with open(file_path, 'w') as file:
+        file.truncate(0)
+    print(f"Contents of {file_path} have been deleted.")
 
 
 
 if __name__ == "__main__":
     session = berserk.TokenSession(USER_API_TOKEN)
     client = berserk.Client(session=session)
+    clear_file('game_history.csv')
     input_user_moves = ['g1f3', 'g2g3', 'f1g2', 'e1g1', 'd2d3', 'b1d2', 'd1e1' ]
     send_challenge()
-    T1 = threading.Thread(target=post_user_moves)
-    # T2 = threading.Thread(target=add_last_move_to_csv)
-    T3 = threading.Thread(target=add_moves_to_queue, args=(input_user_moves,))
+    stop_threads = False
+    thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
+    thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
+    thread_take_user_input = threading.Thread(target=add_moves_to_queue, args=(input_user_moves,lambda: stop_threads, ))
     
-    T3.start()
-    print("-------------between--------------")
-    T1.start()
+    print("Starting thread: take user input")
+    thread_take_user_input.start()
+    print("Starting thread: post moves")
+    thread_post_moves.start()
+    print("Starting thread: save moves to csv")
+    thread_save_moves_to_csv.start()
 
-    # add logic to end both threads
     while(game_not_over):
         for update in client.board.stream_game_state(game_id):
             status = handle_game_state_update(update)
             game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
+            time.sleep(3)
             break
-        time.sleep(1)
+        time.sleep(3)
     print("Game Over!")
 
-
-    if T1.is_alive():
+    stop_threads = True
+    
+    if thread_post_moves.is_alive():
         print("Thread 1 is still running")
     else:
         print("Thread 1 has finished")
 
-    if T3.is_alive():
+    if thread_take_user_input.is_alive():
+        print("Thread 2 is still running")
+    else:
+        print("Thread 2 has finished")
+
+    if thread_save_moves_to_csv.is_alive():
         print("Thread 3 is still running")
     else:
         print("Thread 3 has finished")
-    
-    T1.join()
-    T3.join()
-    # T2.join()
+    thread_post_moves.join()
+    thread_take_user_input.join()
+    thread_save_moves_to_csv.join()
 
 
     
