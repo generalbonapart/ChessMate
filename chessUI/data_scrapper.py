@@ -96,15 +96,10 @@ def add_last_move_to_csv(stop_threads):
 
 def post_user_moves(stop_threads):
     global game_id, game_not_over, lock
-    #lock.acquire() 
     while(game_not_over):
         if stop_threads():
             break
-        move_history = get_game_moves(game_id)
-        with open('game_history.csv', 'w', newline='') as file:
-            writer = csv.writer(file) 
-            writer.writerow([move_history])
-
+        
         for update in client.board.stream_incoming_events():
             if (is_my_turn(update) and not user_moves.empty() and game_not_over):
                 print(f"Posting Move {user_moves.queue[0]}")
@@ -113,7 +108,7 @@ def post_user_moves(stop_threads):
                 break
             time.sleep(3)
     time.sleep(2)
-    #lock.release()
+
 
 def add_moves_to_queue(input_user_moves, stop_threads):
     global user_move_index, game_not_over
@@ -146,11 +141,11 @@ if __name__ == "__main__":
     send_challenge()
     stop_threads = False
     thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
-    # thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
+    thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
     thread_take_user_input = threading.Thread(target=add_moves_to_queue, args=(input_user_moves,lambda: stop_threads, ))
     
     print("Starting thread: save moves to csv")
-    # thread_save_moves_to_csv.start()
+    thread_save_moves_to_csv.start()
     print("Starting thread: take user input")
     thread_take_user_input.start()
     print("Starting thread: post moves")
@@ -179,14 +174,14 @@ if __name__ == "__main__":
     else:
         print("Thread 2 has finished")
 
-    # if thread_save_moves_to_csv.is_alive():
-    #     print("Thread 3 is still running")
-    # else:
-    #     print("Thread 3 has finished")
+    if thread_save_moves_to_csv.is_alive():
+        print("Thread 3 is still running")
+    else:
+        print("Thread 3 has finished")
 
     thread_post_moves.join()
     thread_take_user_input.join()
-    # thread_save_moves_to_csv.join()
+    thread_save_moves_to_csv.join()
 
 
 
