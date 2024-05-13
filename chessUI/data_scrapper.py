@@ -38,6 +38,17 @@ def send_challenge():
     visit_gameURL(game_id)                   #Throws an error if invalid URL
     return game_id
 
+def resign_game():
+    global game_id
+    try:
+        response = client.board.resign_game(game_id)
+        if response.status_code == 200:
+            print("Successfully resigned game : ", game_id)
+        else:
+            print("Failed to resign game:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
+
 def visit_gameURL(game_id):
     url = URL+game_id
     try:
