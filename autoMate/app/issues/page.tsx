@@ -4,7 +4,7 @@ import {Box, Button, Table, TextField} from '@radix-ui/themes'
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { date } from 'zod';
-import { spawnExe } from 'cross-spawn-windows-exe'
+// import { spawnExe } from 'cross-spawn-windows-exe'
 
 
 interface InputParameters{
@@ -20,21 +20,19 @@ const IssuesPage = async() => {
     <form onSubmit={handleSubmit( async (data)=> 
       {
         const parameters = JSON.stringify(data,null,2);
-        console.log(parameters)
-      //   try {
-      //     
-      //     const response = await axios.post('http://localhost:5000/runscript', data, {
-      //       headers: {
-      //         // Overwrite Axios's automatically set Content-Type
-      //         'Content-Type': 'application/json'
-      //       }
-      //     });
-      //     console.log(response)
-          
-      // } catch (error) {
-      //     console.log('Error posting input parameters: ', error);
-      // }
-      //await spawnExe("./send_challenge.py", ["--arg1"]);
+        
+        try {
+          console.log(parameters)
+          const response = await axios.post('http://localhost:5000/runscript', parameters, {
+            headers: {
+              // Overwrite Axios's automatically set Content-Type
+              'Content-Type': 'application/json'
+            }
+          });          
+      } catch (error) {
+          console.log('Error posting input parameters: ', error);
+      }
+      // await spawnExe("./send_challenge.py", ["--arg1"]);
       }
     
     )}>
