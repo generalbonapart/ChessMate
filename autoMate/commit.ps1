@@ -3,7 +3,7 @@ $commitMessage = Read-Host "Enter your commit message"
 
 # Navigate to your repository directory
 # Ensure you update this path to your actual repository path
-cd "C:\Users\siddh\Projects\codeCollab\code-colab"
+cd "E:\ChessMate"
 
 # Add all changes to the staging area
 git add .
