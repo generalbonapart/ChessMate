@@ -7,7 +7,7 @@ import csv
 import queue
 
 file_path = 'moves.txt'
-USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'   # horsyKnight: 'lip_aug0ace9zXdcNrcIfRhL' # ssawant: 'lip_HaJoxjLLofX2FRgDJlBD'
+USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'
 BOT_API_TOKEN = 'lip_OOb8ZjPb0XzdGP8tL6Zz'
 URL = 'https://lichess.org/'
 game_not_over = True
@@ -37,6 +37,17 @@ def send_challenge():
     game_id = response['id']
     visit_gameURL(game_id)                   #Throws an error if invalid URL
     return game_id
+
+def resign_game():
+    global game_id
+    try:
+        response = client.board.resign_game(game_id)
+        if response.status_code == 200:
+            print("Successfully resigned game : ", game_id)
+        else:
+            print("Failed to resign game:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
 
 def visit_gameURL(game_id):
     url = URL+game_id
@@ -97,7 +108,6 @@ def add_last_move_to_csv(stop_threads):
 def post_user_moves(stop_threads):
     global game_id, game_not_over, lock
     while(game_not_over):
-        print("inside post moves ----------")
         if stop_threads():
             break
         
@@ -154,13 +164,12 @@ if __name__ == "__main__":
     
 
     while(game_not_over):
-        time.sleep(3)
         for update in client.board.stream_game_state(game_id):
             status = handle_game_state_update(update)
             game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
             time.sleep(3)
             break
-        
+        time.sleep(5)
     print("Game Over!")
 
     stop_threads = True
@@ -184,3 +193,7 @@ if __name__ == "__main__":
     thread_post_moves.join()
     thread_take_user_input.join()
     thread_save_moves_to_csv.join()
+
+
+
+    

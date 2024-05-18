@@ -1,3 +1,6 @@
+# Save this as script.py
+import sys
+import json
 import lichess.api
 import berserk
 import time
@@ -5,10 +8,12 @@ import requests
 import threading
 import csv
 import queue
+from __future__ import print_function # In python 2.7
+import sys
 
 file_path = 'moves.txt'
-USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'   # horsyKnight: 'lip_aug0ace9zXdcNrcIfRhL' # ssawant: 'lip_HaJoxjLLofX2FRgDJlBD'
-BOT_API_TOKEN = 'lip_OOb8ZjPb0XzdGP8tL6Zz'
+USER_API_TOKEN = 'lip_HaJoxjLLofX2FRgDJlBD' #'lip_HaJoxjLLofX2FRgDJlBD'
+BOT_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'
 URL = 'https://lichess.org/'
 game_not_over = True
 user_move_index = 0
@@ -17,13 +22,7 @@ user_moves = queue.Queue()
 lock = threading.Lock()
 game_id = ''
 
-
-#Doc: https://berserk.readthedocs.io/en/master/api.html#module-berserk.clients
-
-
-
-# Function to create a new game with a bot
-def send_challenge():
+def send_challenge(chess_parameters):
     global game_id
     parameters = {
     "clock_limit": 180,         # Time limit for each player in seconds
@@ -33,10 +32,29 @@ def send_challenge():
     "variant": "standard",      # Chess variant (standard, chess960, etc.)
     "level" : "2"
     }
+    # parameters = {
+    # "clock_limit": chess_parameters['clock_limit'],         # Time limit for each player in seconds
+    # "clock_increment": chess_parameters['clock_increment'],      # Time increment per move in seconds
+    # "days": None,               # Number of days the challenge is valid (None for no limit)
+    # "color": chess_parameters['color'],          # Choose color randomly (can also be "white" or "black")
+    # "variant": chess_parameters['variant'],      # Chess variant (standard, chess960, etc.)
+    # "level" : chess_parameters['level']
+    # }
     response = client.challenges.create_ai(**parameters)  # Challenge is issued against level x stockengine
     game_id = response['id']
     visit_gameURL(game_id)                   #Throws an error if invalid URL
     return game_id
+
+def resign_game():
+    global game_id
+    try:
+        response = client.board.resign_game(game_id)
+        if response.status_code == 200:
+            print("Successfully resigned game : ", game_id)
+        else:
+            print("Failed to resign game:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
 
 def visit_gameURL(game_id):
     url = URL+game_id
@@ -97,7 +115,6 @@ def add_last_move_to_csv(stop_threads):
 def post_user_moves(stop_threads):
     global game_id, game_not_over, lock
     while(game_not_over):
-        print("inside post moves ----------")
         if stop_threads():
             break
         
@@ -135,52 +152,59 @@ def clear_file(file_path):
 
 
 if __name__ == "__main__":
+    print("inside script.py!!!")
+    input_str = sys.argv[1]
+    chess_parameters = json.dumps(input_str)
+    # Process the input data
+    result = f"Received input: {chess_parameters}"
+    
+
     session = berserk.TokenSession(USER_API_TOKEN)
     client = berserk.Client(session=session)
     clear_file('game_history.csv')
     input_user_moves = ['g1f3', 'g2g3', 'f1g2', 'e1g1', 'd2d3', 'b1d2', 'd1e1','h2h3','g1h2','a2a3', 'b2b3', 'c1b2','d2c4' ]
-    send_challenge()
-    stop_threads = False
-    thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
-    thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
-    thread_take_user_input = threading.Thread(target=add_moves_to_queue, args=(input_user_moves,lambda: stop_threads, ))
+    send_challenge(chess_parameters)
+    # stop_threads = False
+    # thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
+    # thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
+    # thread_take_user_input = threading.Thread(target=add_moves_to_queue, args=(input_user_moves,lambda: stop_threads, ))
     
-    print("Starting thread: save moves to csv")
-    thread_save_moves_to_csv.start()
-    print("Starting thread: take user input")
-    thread_take_user_input.start()
-    print("Starting thread: post moves")
-    thread_post_moves.start()
+    # print("Starting thread: save moves to csv")
+    # thread_save_moves_to_csv.start()
+    # print("Starting thread: take user input")
+    # thread_take_user_input.start()
+    # print("Starting thread: post moves")
+    # thread_post_moves.start()
     
 
-    while(game_not_over):
-        time.sleep(3)
-        for update in client.board.stream_game_state(game_id):
-            status = handle_game_state_update(update)
-            game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
-            time.sleep(3)
-            break
-        
-    print("Game Over!")
+    # while(game_not_over):
+    #     for update in client.board.stream_game_state(game_id):
+    #         status = handle_game_state_update(update)
+    #         game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
+    #         time.sleep(3)
+    #         break
+    #     time.sleep(3)
+    # print("Game Over!")
 
-    stop_threads = True
+    # stop_threads = True
 
     
-    if thread_post_moves.is_alive():
-        print("Thread 1 is still running")
-    else:
-        print("Thread 1 has finished")
+    # if thread_post_moves.is_alive():
+    #     print("Thread 1 is still running")
+    # else:
+    #     print("Thread 1 has finished")
 
-    if thread_take_user_input.is_alive():
-        print("Thread 2 is still running")
-    else:
-        print("Thread 2 has finished")
+    # if thread_take_user_input.is_alive():
+    #     print("Thread 2 is still running")
+    # else:
+    #     print("Thread 2 has finished")
 
-    if thread_save_moves_to_csv.is_alive():
-        print("Thread 3 is still running")
-    else:
-        print("Thread 3 has finished")
+    # if thread_save_moves_to_csv.is_alive():
+    #     print("Thread 3 is still running")
+    # else:
+    #     print("Thread 3 has finished")
 
-    thread_post_moves.join()
-    thread_take_user_input.join()
-    thread_save_moves_to_csv.join()
+    # thread_post_moves.join()
+    # thread_take_user_input.join()
+    # thread_save_moves_to_csv.join()
+
