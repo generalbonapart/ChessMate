@@ -30,6 +30,9 @@ def get_update():
 # Function to create a new game with a bot
 def send_challenge(input_params):
     global game_id
+
+    #uncomment below parameters{...} if send_challenge.py is executed individually
+
     # parameters = {
     # "clock_limit":180,         # Time limit for each player in seconds
     # "clock_increment": 10,      # Time increment per move in seconds
@@ -38,6 +41,8 @@ def send_challenge(input_params):
     # "variant": "standard",      # Chess variant (standard, chess960, etc.)
     # "level" : "3"
     # }
+
+    # Uncomment below parameters if send_challenge.py is executed via nextJS UI
     parameters = {
     "clock_limit":int(input_params['clock_limit']),         # Time limit for each player in seconds
     "clock_increment": int(input_params['clock_increment']),      # Time increment per move in seconds
@@ -85,10 +90,6 @@ def stream_game_moves():
         time.sleep(1)
 
 def get_game_moves(game_id):
-    # game = lichess.api.game(game_id)
-    # return game['moves']
-    # event = client.games.stream_game_moves(game_id)
-    # return event['fen']
     for event in client.board.stream_game_state(game_id):
         if 'state' in event:
             moves = event['state']['moves']
@@ -177,10 +178,10 @@ if __name__ == "__main__":
     
     
     command_line_args = sys.argv[1:]
-    # input_params = system_args_to_dict()
+    input_params = system_args_to_dict()
     clear_file('game_history.csv')
     input_user_moves = ['g1f3', 'g2g3', 'f1g2', 'e1g1', 'd2d3', 'b1d2', 'd1e1','h2h3','g1h2','a2a3', 'b2b3', 'c1b2','d2c4' ]
-    send_challenge('')
+    send_challenge(input_params)
     stop_threads = False
     thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
     thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
