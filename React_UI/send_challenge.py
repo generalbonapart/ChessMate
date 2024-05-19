@@ -30,22 +30,22 @@ def get_update():
 # Function to create a new game with a bot
 def send_challenge(input_params):
     global game_id
-    parameters = {
-    "clock_limit":180,         # Time limit for each player in seconds
-    "clock_increment": 10,      # Time increment per move in seconds
-    "days": None,               # Number of days the challenge is valid (None for no limit)
-    "color": "white",          # Choose color randomly (can also be "white" or "black")
-    "variant": "standard",      # Chess variant (standard, chess960, etc.)
-    "level" : "3"
-    }
     # parameters = {
-    # "clock_limit":int(input_params['clock_limit']),         # Time limit for each player in seconds
-    # "clock_increment": int(input_params['clock_increment']),      # Time increment per move in seconds
+    # "clock_limit":180,         # Time limit for each player in seconds
+    # "clock_increment": 10,      # Time increment per move in seconds
     # "days": None,               # Number of days the challenge is valid (None for no limit)
-    # "color": str(input_params['color']),          # Choose color randomly (can also be "white" or "black")
-    # "variant": str(input_params['variant']),      # Chess variant (standard, chess960, etc.)
-    # "level" : str(input_params['level'])
+    # "color": "white",          # Choose color randomly (can also be "white" or "black")
+    # "variant": "standard",      # Chess variant (standard, chess960, etc.)
+    # "level" : "3"
     # }
+    parameters = {
+    "clock_limit":int(input_params['clock_limit']),         # Time limit for each player in seconds
+    "clock_increment": int(input_params['clock_increment']),      # Time increment per move in seconds
+    "days": None,               # Number of days the challenge is valid (None for no limit)
+    "color": str(input_params['color']),          # Choose color randomly (can also be "white" or "black")
+    "variant": str(input_params['variant']),      # Chess variant (standard, chess960, etc.)
+    "level" : str(input_params['level'])
+    }
     response = client.challenges.create_ai(**parameters)  # Challenge is issued against level x stockengine
     
     print(response)
