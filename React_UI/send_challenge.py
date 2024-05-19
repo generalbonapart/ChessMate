@@ -93,7 +93,7 @@ def get_game_moves(game_id):
     for event in client.board.stream_game_state(game_id):
         if 'state' in event:
             moves = event['state']['moves']
-            time.sleep(4)
+            time.sleep(6)
             return moves
         
 
@@ -136,8 +136,8 @@ def post_user_moves(stop_threads):
                 print(f"Posting Move {user_moves.queue[0]}")
                 client.board.make_move(game_id,user_moves.get())
                 break
-            time.sleep(2)
-        time.sleep(2)
+            time.sleep(3)
+        time.sleep(3)
 
 
 def add_moves_to_queue(input_user_moves, stop_threads):
@@ -199,9 +199,9 @@ if __name__ == "__main__":
         for update in client.board.stream_game_state(game_id):
             status = handle_game_state_update(update)
             game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
-            time.sleep(2)
+            time.sleep(3)
             break
-        time.sleep(2)
+        time.sleep(3)
     print("Game Over!")
 
     stop_threads = True
