@@ -28,7 +28,8 @@ const IssuesPage = async() => {
               // Overwrite Axios's automatically set Content-Type
               'Content-Type': 'application/json'
             }
-          });          
+          }
+        );          
       } catch (error) {
           console.log('Error posting input parameters: ', error);
       }
@@ -54,31 +55,35 @@ const IssuesPage = async() => {
           <Box maxWidth="150px">
 
 
-            {/* Remove the predeifned values here */}
+            {/* Remove the predeifned values here
+              parameters with uppercase doesn't work
+              clock_limit must be a multiple of 60
+              
+            */}
 
 
-          <TextField.Root size="1" placeholder="White/Black" value= "White" {...register('color')} />
+          <TextField.Root size="1" placeholder="White/Black" defaultValue= "white" {...register('color')} />
           </Box>
           </Table.Cell>
 
           <Table.Cell>
           <Box maxWidth="150px">
-            <TextField.Root size="1" placeholder="1-10" value= "4" {...register('level')}/>
+            <TextField.Root size="1" placeholder="1-10" defaultValue= "4" {...register('level')}/>
           </Box>
           </Table.Cell>
           <Table.Cell>
           <Box maxWidth="150px">
-            <TextField.Root size="1" placeholder="Standard, 360" value= "Standard" {...register('variant')} />
+            <TextField.Root size="1" placeholder="Standard, 360" defaultValue= "standard" {...register('variant')} />
           </Box>
           </Table.Cell>
           <Table.Cell>
           <Box maxWidth="150px">
-            <TextField.Root size="1" placeholder="Minutes" value= "10" {...register('clock_limit')} />
+            <TextField.Root size="1" placeholder="Minutes" defaultValue= "180" {...register('clock_limit')} />
           </Box>
           </Table.Cell>
           <Table.Cell>
           <Box maxWidth="150px">
-            <TextField.Root size="1" placeholder="Seconds" value= "5" {...register('clock_increment')}/>
+            <TextField.Root size="1" placeholder="Seconds" defaultValue= "5" {...register('clock_increment')}/>
           </Box>
           </Table.Cell>
 

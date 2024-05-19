@@ -5,6 +5,8 @@ import requests
 import threading
 import csv
 import queue
+import json
+import sys
 
 file_path = 'moves.txt'
 USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'
@@ -14,7 +16,6 @@ game_not_over = True
 user_move_index = 0
 user_moves = queue.Queue()
 updates_queue = queue.Queue()
-#move_history = ["start"]
 lock = threading.Lock()
 game_id = ''
 
@@ -27,17 +28,27 @@ def get_update():
             return
 
 # Function to create a new game with a bot
-def send_challenge():
+def send_challenge(input_params):
     global game_id
     parameters = {
-    "clock_limit": 180,         # Time limit for each player in seconds
-    "clock_increment": 20,      # Time increment per move in seconds
+    "clock_limit":180,         # Time limit for each player in seconds
+    "clock_increment": 10,      # Time increment per move in seconds
     "days": None,               # Number of days the challenge is valid (None for no limit)
     "color": "white",          # Choose color randomly (can also be "white" or "black")
     "variant": "standard",      # Chess variant (standard, chess960, etc.)
-    "level" : "2"
+    "level" : "3"
     }
+    # parameters = {
+    # "clock_limit":int(input_params['clock_limit']),         # Time limit for each player in seconds
+    # "clock_increment": int(input_params['clock_increment']),      # Time increment per move in seconds
+    # "days": None,               # Number of days the challenge is valid (None for no limit)
+    # "color": str(input_params['color']),          # Choose color randomly (can also be "white" or "black")
+    # "variant": str(input_params['variant']),      # Chess variant (standard, chess960, etc.)
+    # "level" : str(input_params['level'])
+    # }
     response = client.challenges.create_ai(**parameters)  # Challenge is issued against level x stockengine
+    
+    print(response)
     game_id = response['id']
     visit_gameURL(game_id)                   #Throws an error if invalid URL
     return game_id
@@ -64,9 +75,26 @@ def visit_gameURL(game_id):
     except requests.exceptions.RequestException as e:
         print("Error:", e)
 
+def stream_game_moves():
+    # Stream game moves
+    for event in client.games.stream_game_moves(game_id):
+        if 'fen' in event:
+            moves = event['fen']
+            print(f"Moves: {moves}")
+            return moves
+        time.sleep(1)
+
 def get_game_moves(game_id):
-    game = lichess.api.game(game_id)
-    return game['moves']
+    # game = lichess.api.game(game_id)
+    # return game['moves']
+    # event = client.games.stream_game_moves(game_id)
+    # return event['fen']
+    for event in client.board.stream_game_state(game_id):
+        if 'state' in event:
+            moves = event['state']['moves']
+            time.sleep(4)
+            return moves
+        
 
 # Function to handle game state updates
 # Use stream_board_gamestate()
@@ -127,14 +155,32 @@ def clear_file(file_path):
         file.truncate(0)
     print(f"Contents of {file_path} have been deleted.")
 
+def args_to_dict(args):
+    arg_dict = {}
+    for arg in args:
+        if ':' in arg:
+            key, value = arg.split(': ')
+            arg_dict[key] = value
+    return arg_dict
 
+def system_args_to_dict():
+    input_argv = sys.argv[1:]
+    s = str(input_argv)
+    s = s[2:-2]
+    r = s.replace("'", '"')
+    j = json.loads(r)
+    return j
 
 if __name__ == "__main__":
     session = berserk.TokenSession(USER_API_TOKEN)
     client = berserk.Client(session=session)
+    
+    
+    command_line_args = sys.argv[1:]
+    # input_params = system_args_to_dict()
     clear_file('game_history.csv')
     input_user_moves = ['g1f3', 'g2g3', 'f1g2', 'e1g1', 'd2d3', 'b1d2', 'd1e1','h2h3','g1h2','a2a3', 'b2b3', 'c1b2','d2c4' ]
-    send_challenge()
+    send_challenge('')
     stop_threads = False
     thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
     thread_save_moves_to_csv = threading.Thread(target=add_last_move_to_csv, args=(lambda: stop_threads, ) )
