@@ -1,0 +1,81 @@
+---
+swagger: "2.0"
+info:
+  description: "This API is used to configure settings on the remote automated chess\
+    \ board."
+  version: "1.1.0"
+  title: "ChessMate API"
+
+basePath: "/v1"
+schemes:
+- "http"
+- "https"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /getMoves:
+    get:
+      description: "Returns all moves done in the current game."
+      operationId: "get_moves_get"
+      parameters: []
+      responses:
+        "200":
+          description: "Moves formatted in FIDE notation."
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              example: "1. e4 e5"
+        default:
+          description: "Unknown error occurred"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /makeMove/{move}:
+    put:
+      description: "Make a move in a game"
+      operationId: "make_move_move_put"
+      parameters:
+      - name: "move"
+        in: "path"
+        description: "chess move in scientific notation"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "runMode change was executed successfully"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /startGame:
+    put:
+      description: "Start game with the settings provided"
+      operationId: "start_game_put"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: true
+        schema:
+          $ref: "#/definitions/gameParams"
+      responses:
+        "200":
+          description: "Game started"
+        default:
+          description: "Unknown error occurred."
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+definitions:
+  gameParams:
+    type: "object"
+    required:
+    - "level"
+    - "side"
+    - "time"
+    properties:
+      level:
+        type: "integer"
+        description: "Set the strength of the chess engine"
+      time:
+        type: "integer"
+        description: "Set the time limit of the game"
+      side:
+        type: "string"
+        description: "Play for White or Black"
+    description: "Parameters of the chess match"
