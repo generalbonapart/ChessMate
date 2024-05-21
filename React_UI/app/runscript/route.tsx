@@ -2,12 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
 
-export async function POST(req: NextRequest, res: NextResponse) {
-  console.log("Hello there !!!!")
+export async function POST(req: NextRequest) {
   if (req.method === 'POST') {
-
-    // const { clock_limit, clock_increment, color, variant, level } = req.body
-    // const inputParameters = JSON.stringify({ clock_limit, clock_increment, color, variant, level })
     const inputParameters = await req.json();
     console.log(inputParameters)
     // Path to the Python script
