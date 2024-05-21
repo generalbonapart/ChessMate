@@ -9,7 +9,7 @@ import json
 import sys
 
 file_path = 'moves.txt'
-USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL'
+USER_API_TOKEN = 'lip_aug0ace9zXdcNrcIfRhL' 
 BOT_API_TOKEN = 'lip_OOb8ZjPb0XzdGP8tL6Zz'
 URL = 'https://lichess.org/'
 game_not_over = True
@@ -164,13 +164,20 @@ def args_to_dict(args):
             arg_dict[key] = value
     return arg_dict
 
+# def system_args_to_dict():
+#     input_argv = sys.argv[1:]
+#     s = str(input_argv)
+#     s = s[2:-2]
+#     r = s.replace("'", '"')
+#     j = json.loads(r)
+#     return j
+
 def system_args_to_dict():
     input_argv = sys.argv[1:]
-    s = str(input_argv)
-    s = s[2:-2]
-    r = s.replace("'", '"')
-    j = json.loads(r)
-    return j
+    if len(input_argv) == 0:
+        raise ValueError("No input parameters provided")
+    json_string = input_argv[0]
+    return json.loads(json_string)
 
 if __name__ == "__main__":
     session = berserk.TokenSession(USER_API_TOKEN)
