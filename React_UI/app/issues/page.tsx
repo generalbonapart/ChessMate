@@ -23,7 +23,7 @@ const IssuesPage = async() => {
         
         try {
           console.log(parameters)
-          const response = await axios.post('http://localhost:5000/runscript', parameters, {
+          const response = await axios.post('/runscript', parameters, {
             headers: {
               // Overwrite Axios's automatically set Content-Type
               'Content-Type': 'application/json'
