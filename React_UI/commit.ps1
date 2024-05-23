@@ -14,4 +14,5 @@ git commit -m "$commitMessage"
 # Push the changes to the remote repository
 git push
 
+cd "E:\ChessMate\React_UI>"
 Write-Host "Changes have been pushed to the remote repository."
