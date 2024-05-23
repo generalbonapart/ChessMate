@@ -2,7 +2,10 @@
 import Link from 'next/link'
 import React from 'react'
 import { TiCode } from "react-icons/ti";
+import { FaChessKnight } from "react-icons/fa";
 import { usePathname } from 'next/navigation';
+import { LiaChessKnightSolid } from "react-icons/lia";
+import { SiLichess } from "react-icons/si";
 import classNames from 'classnames';
 const NavBar = () => {
     const currentPath = usePathname();
@@ -13,7 +16,7 @@ const NavBar = () => {
     ]
   return (
     <nav className='flex space-x-6 border-b mb-5 px-5 h-14 items-center'>
-        <Link href="/"><TiCode /></Link>
+        <Link href="/"><SiLichess /></Link>
         <ul className='flex space-x-6'>
             {links.map(link => 
             <Link key = {link.href} 

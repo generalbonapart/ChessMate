@@ -182,8 +182,6 @@ def system_args_to_dict():
 if __name__ == "__main__":
     session = berserk.TokenSession(USER_API_TOKEN)
     client = berserk.Client(session=session)
-    
-    
     command_line_args = sys.argv[1:]
     input_params = system_args_to_dict()
     clear_file('game_history.csv')
