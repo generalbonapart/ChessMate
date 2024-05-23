@@ -46,9 +46,10 @@ const IssuesPage = () => {
             <Table.Row>
               <Table.ColumnHeaderCell>Color</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Level</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Variant</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Clock Limit</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Clock Increment</Table.ColumnHeaderCell>
+              {/* The below code will help with mobile app resolution */}
+
               {/* <Table.ColumnHeaderCell className='hidden md:table-cell'>Status</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell className='hidden md:table-cell'>Created</Table.ColumnHeaderCell> */}
             </Table.Row>
@@ -61,8 +62,7 @@ const IssuesPage = () => {
 
               {/* Remove the predeifned values here
                 parameters with uppercase doesn't work
-                clock_limit must be a multiple of 60
-                
+                clock_limit must be a multiple of 60  
               */}
 
 
@@ -77,11 +77,6 @@ const IssuesPage = () => {
             </Table.Cell>
             <Table.Cell>
             <Box maxWidth="150px">
-              <TextField.Root size="1" placeholder="Standard, 360" defaultValue= "standard" {...register('variant')} />
-            </Box>
-            </Table.Cell>
-            <Table.Cell>
-            <Box maxWidth="150px">
               <TextField.Root size="1" placeholder="Minutes" defaultValue= "180" {...register('clock_limit')} />
             </Box>
             </Table.Cell>
@@ -90,7 +85,6 @@ const IssuesPage = () => {
               <TextField.Root size="1" placeholder="Seconds" defaultValue= "5" {...register('clock_increment')}/>
             </Box>
             </Table.Cell>
-
               </Table.Row>
           </Table.Body>
         </Table.Root>

@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     // Path to the Python script
     const scriptPath = path.join(process.cwd(), 'send_challenge.py')
 
-    spawn('python3', [scriptPath, JSON.stringify(inputParameters)])
+    spawn('python', [scriptPath, JSON.stringify(inputParameters)])
     return NextResponse.json({ error: 'Post Successful' }, { status: 200 })
 
   } else {

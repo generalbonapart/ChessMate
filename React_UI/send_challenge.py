@@ -48,7 +48,7 @@ def send_challenge(input_params):
     "clock_increment": int(input_params['clock_increment']),      # Time increment per move in seconds
     "days": None,               # Number of days the challenge is valid (None for no limit)
     "color": str(input_params['color']),          # Choose color randomly (can also be "white" or "black")
-    "variant": str(input_params['variant']),      # Chess variant (standard, chess960, etc.)
+    "variant": "standard",                        # Chess variant only supports standard
     "level" : str(input_params['level'])
     }
     response = client.challenges.create_ai(**parameters)  # Challenge is issued against level x stockengine
