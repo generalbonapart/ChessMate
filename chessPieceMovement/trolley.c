@@ -1,94 +1,114 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pigpio.h>
+#include <gpiod.h>
+#include <unistd.h>  // For sleep and usleep
+#include <math.h>
 
-#define mag_pin 18    // BCM GPIO 18
-#define dirPin 23     // BCM GPIO 23
-#define stepPin 24    // BCM GPIO 24
-#define dirPin2 4     // BCM GPIO 4
-#define stepPin2 25   // BCM GPIO 25
-#define motors 13     // Placeholder for motor enable pin
-#define stepsPerRevolution 220
+#define CONSUMER "gpio_consumer"  // Consumer label for gpiod
 
-const int YDOWN[2] = {0, 1};
-const int YUP[2] = {1, 0};
-const int XLEFT[2] = {0, 0};
-const int XRIGHT[2] = {1, 1};
+const char *chipname = "gpiochip0";  // GPIO chip name, modify if different
+
+// Define GPIO line numbers (BCM numbering)
+#define MAG_PIN 18    // BCM GPIO 18
+#define DIR_PIN 23    // BCM GPIO 23
+#define STEP_PIN 24   // BCM GPIO 24
+#define DIR_PIN2 4    // BCM GPIO 4
+#define STEP_PIN2 25  // BCM GPIO 25
+#define MOTORS 27     // Placeholder for motor enable pin (choose an available GPIO)
+#define STEPS_PER_REVOLUTION 220
+
+struct gpiod_chip *chip;
+struct gpiod_line *mag_pin, *dir_pin, *step_pin, *dir_pin2, *step_pin2, *motors;
+
+// Direction arrays
+// CW = 1 CCW = 0 error = -1
+// Motor a and b (direction and power)
+//            {aDir, bDir, aPower, bPower}
+ int YDOWN[4]  =   {0, 1, 1, 1};
+ int YUP[4]    =   {1, 0, 1, 1};
+ int XLEFT[4]  =   {0, 0, 1, 1};
+ int XRIGHT[4] =   {1, 1, 1, 1};
+ int DUPR[4]   =   {1, 0, 1, 0}; // motor A is on motor B is off, last two values
+ int DUPL[4]   =   {0, 1, 0, 1};
+ int DDOWNR[4] =   {0, 0, 1, 0}; 
+ int DDOWNL[4] =   {0, 0, 0, 1};
 
 void setup() {
-    if (gpioInitialise() < 0) {
-        fprintf(stderr, "pigpio initialization failed\n");
+    // Open GPIO chip
+    chip = gpiod_chip_open_by_name(chipname);
+    if (!chip) {
+        perror("gpiod_chip_open_by_name failed");
         exit(1);
     }
 
-    gpioSetMode(mag_pin, PI_OUTPUT);
-    gpioSetMode(stepPin, PI_OUTPUT);
-    gpioSetMode(dirPin, PI_OUTPUT);
-    gpioSetMode(stepPin2, PI_OUTPUT);
-    gpioSetMode(dirPin2, PI_OUTPUT);
-    gpioSetMode(motors, PI_OUTPUT);
-    gpioWrite(motors, PI_LOW);
+    // Get GPIO lines and set directions
+    mag_pin = gpiod_chip_get_line(chip, MAG_PIN);
+    step_pin = gpiod_chip_get_line(chip, STEP_PIN);
+    dir_pin = gpiod_chip_get_line(chip, DIR_PIN);
+    step_pin2 = gpiod_chip_get_line(chip, STEP_PIN2);
+    dir_pin2 = gpiod_chip_get_line(chip, DIR_PIN2);
+    motors = gpiod_chip_get_line(chip, MOTORS);
+
+    // Set lines as output and initialize low
+    gpiod_line_request_output(mag_pin, CONSUMER, 0);
+    gpiod_line_request_output(step_pin, CONSUMER, 0);
+    gpiod_line_request_output(dir_pin, CONSUMER, 0);
+    gpiod_line_request_output(step_pin2, CONSUMER, 0);
+    gpiod_line_request_output(dir_pin2, CONSUMER, 0);
+    gpiod_line_request_output(motors, CONSUMER, 0);
 }
 
-void moveTrolley(int dir[]) {
-    gpioWrite(dirPin, dir[0]);
-    gpioWrite(dirPin2, dir[1]);
-
-    for (int x = 0; x < stepsPerRevolution; x++) {
-        gpioWrite(stepPin, PI_HIGH);
-        gpioWrite(stepPin2, PI_HIGH);
-        gpioDelay(1500);  // Delay in microseconds
-        gpioWrite(stepPin, PI_LOW);
-        gpioWrite(stepPin2, PI_LOW);
-        gpioDelay(1500);
+void moveTrolley(int dir[], int delta) {
+    gpiod_line_set_value(dir_pin, dir[0]);
+    gpiod_line_set_value(dir_pin2, dir[1]);
+    int total_steps = delta * STEPS_PER_REVOLUTION;
+    // to move diagnoally the total_steps must be slightly more than X or Y steps because hypotenuse
+    for (int x = 0; x < total_steps; x++) {
+        gpiod_line_set_value(step_pin, dir[2]);
+        gpiod_line_set_value(step_pin2, dir[3]);
+        usleep(1500);  // Delay in microseconds
+        gpiod_line_set_value(step_pin, 0);
+        gpiod_line_set_value(step_pin2, 0);
+        usleep(1500);
     }
 }
 
-void moveTrolleyByN(int dir[], int n) {
-    for (int i = 0; i < n; i++) {
-        moveTrolley(dir);
-        gpioDelay(500000);  // Delay in microseconds
-    }
+
+
+
+void moveTrolleyDown(int delta) {
+    moveTrolley(YDOWN, delta);
 }
 
-void moveTrolleyDown() {
-    moveTrolley(YDOWN);
+void moveTrolleyUp(int delta) {
+    moveTrolley(YUP, delta);
 }
 
-void moveTrolleyUp() {
-    moveTrolley(YUP);
+void moveTrolleyRight(int delta) {
+    moveTrolley(XRIGHT, delta);
 }
 
-void moveTrolleyRight(int n) {
-    moveTrolleyByN(XRIGHT, n);
+void moveTrolleyLeft(int delta) {
+    moveTrolley(XLEFT, delta);
 }
 
-void moveTrolleyLeft(int n) {
-    moveTrolleyByN(XLEFT, n);
+void moveTrolleyDiagUR(int delta) {
+    moveTrolley(DUPR, delta);
 }
 
-void leftDiagUp() {
-    for (int x = 0; x < stepsPerRevolution; x++) {
-        gpioWrite(dirPin, PI_HIGH);
-        gpioWrite(stepPin, PI_HIGH);
-        gpioDelay(1500);
-        gpioWrite(stepPin, PI_LOW);
-        gpioDelay(1500);
-    }
+void moveTrolleyDiagUL(int delta) {
+    moveTrolley(DUPL, delta);
+}
+void moveTrolleyDiagDR(int delta) {
+    moveTrolley(DDOWNR, delta);
+}
+void moveTrolleyDiagDL(int delta) {
+    moveTrolley(DDOWNL, delta);
 }
 
-void leftDiagDown() {
-    for (int x = 0; x < stepsPerRevolution; x++) {
-        gpioWrite(dirPin, PI_LOW);
-        gpioWrite(stepPin, PI_HIGH);
-        gpioDelay(1500);
-        gpioWrite(stepPin, PI_LOW);
-        gpioDelay(1500);
-    }
-}
 
-// Function to translate chess notation to Cartesian coordinates
+
 void chessToCartesian(char *chessPosition, int *x, int *y) {
     // Ensure the input string is in the correct format (e.g., "a1" to "h8")
     if (strlen(chessPosition) != 2 ||
@@ -102,61 +122,78 @@ void chessToCartesian(char *chessPosition, int *x, int *y) {
     *x = chessPosition[0] - 'a';
 
     // Convert the numeric part of the chess notation to y coordinate
-    *y = 8 - (chessPosition[1] - '0');
-}
+    *y = (chessPosition[1] - '0') - 1;
 
-// Function to calculate movement from one chess square to another
-void calculateMovement(char *chessSquare1, char *chessSquare2) {
-    int x1, y1, x2, y2;
-    
-    // Translate chess notation to Cartesian coordinates for both squares
-    chessToCartesian(chessSquare1, &x1, &y1);
-    chessToCartesian(chessSquare2, &x2, &y2);
-    
-    // Calculate differences in x and y coordinates with respect to the origin (0,0)
-    int deltaX = x2 - x1;
-    int deltaY = y2 - y1;
-    
-    // Move the trolley based on the calculated displacements
-    if (deltaX > 0) {
-        moveTrolleyRight(deltaX);
-    } else if (deltaX < 0) {
-        moveTrolleyLeft(-deltaX);
-    }
-    
-    if (deltaY > 0) {
-        moveTrolleyUp(deltaY);
-    } else if (deltaY < 0) {
-        moveTrolleyDown(-deltaY);
-    }
+    //a1 = (0,0) and h8 = (7,7) rows/cols 0 to 7
 }
 
 int main() {
-    char startSquare[3], endSquare[3];
-    char exitKey;
 
-    // Initialize GPIO setup
+    //To run this use: gcc -o trolley trolley.c -lgpiod -lm 
+
+    // plus any additoinal libraries necessary
     setup();
+
+    char startSquare[3], endSquare[3];
+    int moveDiag = 0;
+    char exitKey;
 
     // Run continuously until the user decides to exit
     do {
-        // Input the starting and ending chess squares
         printf("Enter the starting chess square (e.g., a1): ");
         scanf("%s", startSquare);
-        
+
         printf("Enter the ending chess square (e.g., a1): ");
         scanf("%s", endSquare);
-        
-        // Calculate and move the trolley based on the movement between squares
-        calculateMovement(startSquare, endSquare);
 
-        // Prompt the user to exit or continue
+        printf("Move diagonally?");
+        scanf("%d", &moveDiag);
+
+        int x1, y1, x2, y2;
+        x1 = y1 = x2 = y2 = 0;
+        chessToCartesian(startSquare, &x1, &y1);
+        chessToCartesian(endSquare, &x2, &y2);
+        //handle delta = 0
+        int deltaX = x2 - x1;
+        int deltaY = y2 - y1;
+        //handle sqrt(0)
+        int deltaDiag = sqrt(deltaX * deltaX + deltaY * deltaY); //maybe floor and sum might make it more accurate
+        // I thing there is not diag
+        if(moveDiag){
+            if(deltaX >= 0 && deltaY >= 0){
+                // move trolley diag up
+                moveTrolleyDiagUR(deltaDiag);
+            }
+            else if (deltaX < 0 && deltaY >= 0){
+                moveTrolleyDiagUL(deltaDiag);
+            }
+            else if (deltaX >= 0 && deltaY < 0){
+                moveTrolleyDiagDR(deltaDiag);
+            }
+            else if (deltaX < 0 && deltaY < 0){
+                moveTrolleyDiagDL(deltaDiag);
+            }
+            else{
+                fprintf(stderr, "Cannot move in any diagonal direction \n");
+                exit(1);
+            }
+        }
+        else{
+             // if delta = 0 do nothing
+            if (deltaX > 0) moveTrolleyRight(deltaX);
+            else if (deltaX < 0) moveTrolleyLeft(deltaX);
+
+            if (deltaY > 0) moveTrolleyUp(deltaY);
+            else if (deltaY < 0) moveTrolleyDown(deltaY);
+        }
+
+       
         printf("Press 'q' to quit or any other key to continue: ");
-        scanf(" %c", &exitKey); // Note: space before %c to consume whitespace
-
+        scanf(" %c", &exitKey);  // Note: space before %c to consume whitespace
     } while (exitKey != 'q');
 
-    gpioTerminate(); // Clean up GPIO resources
+    // Cleanup
+    gpiod_chip_close(chip);
+
     return 0;
 }
-
