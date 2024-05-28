@@ -17,6 +17,7 @@ const char *chipname = "gpiochip0";  // GPIO chip name, modify if different
 #define STEP_PIN2 25  // BCM GPIO 25
 #define MOTORS 27     // Placeholder for motor enable pin (choose an available GPIO)
 #define STEPS_PER_REVOLUTION 220
+#define ONE_SQUARE_UNIT 1 // Adjust accordingly 
 
 struct gpiod_chip *chip;
 struct gpiod_line *mag_pin, *dir_pin, *step_pin, *dir_pin2, *step_pin2, *motors;
@@ -62,7 +63,7 @@ void setup() {
 void moveTrolley(int dir[], int delta) {
     gpiod_line_set_value(dir_pin, dir[0]);
     gpiod_line_set_value(dir_pin2, dir[1]);
-    int total_steps = delta * STEPS_PER_REVOLUTION;
+    int total_steps = delta * STEPS_PER_REVOLUTION * ONE_SQUARE_UNIT; 
     // to move diagnoally the total_steps must be slightly more than X or Y steps because hypotenuse
     for (int x = 0; x < total_steps; x++) {
         gpiod_line_set_value(step_pin, dir[2]);
@@ -157,8 +158,8 @@ int main() {
         int deltaX = x2 - x1;
         int deltaY = y2 - y1;
         //handle sqrt(0)
-        int deltaDiag = sqrt(deltaX * deltaX + deltaY * deltaY); //maybe floor and sum might make it more accurate
-        // I thing there is not diag
+        int deltaDiag = sqrt(deltaX * deltaX + deltaY * deltaY) * ONE_SQUARE_UNIT; //maybe floor and ceil function might make it more accurate
+    
         if(moveDiag){
             if(deltaX >= 0 && deltaY >= 0){
                 // move trolley diag up
