@@ -135,28 +135,25 @@ int main() {
     // plus any additoinal libraries necessary
     setup();
 
-    char startSquare[3], endSquare[3];
+    endSquare[3];
     int moveDiag = 0;
+    int currentX = 0, currentY = 0;  // Assuming starting at a1 (0,7)
     char exitKey;
 
     // Run continuously until the user decides to exit
     do {
-        printf("Enter the starting chess square (e.g., a1): ");
-        scanf("%s", startSquare);
-
         printf("Enter the ending chess square (e.g., a1): ");
         scanf("%s", endSquare);
 
         printf("Move diagonally?");
         scanf("%d", &moveDiag);
 
-        int x1, y1, x2, y2;
-        x1 = y1 = x2 = y2 = 0;
-        chessToCartesian(startSquare, &x1, &y1);
-        chessToCartesian(endSquare, &x2, &y2);
+        int endX, endY;        
+        chessToCartesian(endSquare, &endX, &endY);
+
         //handle delta = 0
-        int deltaX = x2 - x1;
-        int deltaY = y2 - y1;
+        int deltaX = endX - currentX;
+        int deltaY =  endY - currentY;
         //handle sqrt(0)
         int deltaDiag = sqrt(deltaX * deltaX + deltaY * deltaY) * ONE_SQUARE_UNIT; //maybe floor and ceil function might make it more accurate
     
@@ -188,10 +185,18 @@ int main() {
             else if (deltaY < 0) moveTrolleyDown(deltaY);
         }
 
+        // Update the current position
+        currentX = endX;
+        currentY = endY;
        
         printf("Press 'q' to quit or any other key to continue: ");
         scanf(" %c", &exitKey);  // Note: space before %c to consume whitespace
     } while (exitKey != 'q');
+
+    // Move back to the starting position (a1)
+    printf("Returning to starting position (a1)...\n");
+    int startX = 0, startY = 0; // a1 in Cartesian coordinates
+    calculateMovement(currentX, currentY, startX, startY);
 
     // Cleanup
     gpiod_chip_close(chip);
