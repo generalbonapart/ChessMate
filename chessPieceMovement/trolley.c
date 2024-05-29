@@ -128,6 +128,22 @@ void chessToCartesian(char *chessPosition, int *x, int *y) {
     //a1 = (0,0) and h8 = (7,7) rows/cols 0 to 7
 }
 
+// Function to calculate movement from one chess square to another
+void calculateMovement(int x1, int y1, int x2, int y2) {
+    // Calculate differences in x and y coordinates with respect to the origin (0,0)
+    int deltaX = x2 - x1;
+    int deltaY = y2 - y1;
+    
+    printf("DeltaX: %d, DeltaY: %d\n", deltaX, deltaY);
+    // Move the trolley based on the calculated displacements
+    if delta = 0 do nothing
+        if (deltaX > 0) moveTrolleyRight(deltaX);
+        else if (deltaX < 0) moveTrolleyLeft(deltaX);
+
+        if (deltaY > 0) moveTrolleyUp(deltaY);
+        else if (deltaY < 0) moveTrolleyDown(deltaY);
+}
+
 int main() {
 
     //To run this use: gcc -o trolley trolley.c -lgpiod -lm 
@@ -135,7 +151,7 @@ int main() {
     // plus any additoinal libraries necessary
     setup();
 
-    endSquare[3];
+    char endSquare[3];
     int moveDiag = 0;
     int currentX = 0, currentY = 0;  // Assuming starting at a1 (0,7)
     char exitKey;
