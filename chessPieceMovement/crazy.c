@@ -9,8 +9,11 @@
 #define dirPin2 4     // BCM GPIO 4
 #define stepPin2 25   // BCM GPIO 25
 #define motors 13     // Placeholder for motor enable pin
-#define stepsPerRevolution 180
-#define stepsPerRevolutionDiag 360
+#define SPR 350        // steps per revolution
+#define SPR_CALIBRATE 100 // steps per revolution
+#define MAX_LEFT 8
+#define MAX_DOWN 8
+int calibration = 1;
 
 // Direction arrays
 // CW = 1 CCW = 0 error = -1
@@ -67,16 +70,16 @@ void setup() {
 void moveTrolley(const int dir[], int n) {
     gpioWrite(dirPin, dir[0]);
     gpioWrite(dirPin2, dir[1]);
-    int steps = (dir[2] != dir[3])?stepsPerRevolutionDiag:stepsPerRevolution;
+    int steps = (calibration)?SPR_CALIBRATE:SPR;
 
-    for (int x = 0; x < steps * n; x++) {
-        gpioWrite(stepPin, dir[2]);
+    for (int x = 0; x < steps; x++) {
+        gpioWrite(stepPin,  dir[2]);
         gpioWrite(stepPin2, dir[3]);
-        gpioDelay(1000);  // Delay in microseconds
-        gpioWrite(stepPin, 0);
+        gpioDelay(1000);
+
+        gpioWrite(stepPin,  0);
         gpioWrite(stepPin2, 0);
         gpioDelay(1000);
-        gpioDelay(50000);
     }
 }
 
@@ -90,35 +93,35 @@ void moveTrolleyByN(const int dir[], int n) {
 }
 
 void moveTrolleyDown(int n) {
-    moveTrolley(YDOWN, n);
+    moveTrolleyByN(YDOWN, n);
 }
 
 void moveTrolleyUp(int n) {
-    moveTrolley(YUP, n);
+    moveTrolleyByN(YUP, n);
 }
 
 void moveTrolleyRight(int n) {
-    moveTrolley(XRIGHT, n);
+    moveTrolleyByN(XRIGHT, n);
 }
 
 void moveTrolleyLeft(int n) {
-    moveTrolley(XLEFT, n);
+    moveTrolleyByN(XLEFT, n);
 }
 
 void moveTrolleyDiagUL(int n) {
-    moveTrolley(DUPL, n);
+    moveTrolleyByN(DUPL, n);
 }
 
 void moveTrolleyDiagDL(int n) {
-    moveTrolley(DDOWNL, n);
+    moveTrolleyByN(DDOWNL, n);
 }
 
 void moveTrolleyDiagUR(int n) {
-    moveTrolley(DUPR, n);
+    moveTrolleyByN(DUPR, n);
 }
 
 void moveTrolleyDiagDR(int n) {
-    moveTrolley(DDOWNR, n);
+    moveTrolleyByN(DDOWNR, n);
 }
 
 // Function to translate chess notation to Cartesian coordinates
@@ -158,13 +161,19 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     }
     // Check for  X movements
     if (deltaX != 0) {
-        straightMovesX[deltaX > 0 ? 1 : 0](absDeltaX);
+        straightMovesX[deltaX > 0 ? 0 : 1](absDeltaX);
     }
 
     // Check for  Y movements
     if (deltaY != 0) {
-        straightMovesY[deltaY > 0 ? 1 : 0](absDeltaY);
+        straightMovesY[deltaY > 0 ? 0 : 1](absDeltaY);
     }
+}
+
+void calibrateTrolley(){
+    moveTrolleyLeft(MAX_LEFT);
+    moveTrolleyDown(MAX_DOWN);
+    calibration = 0;
 }
 
 int main() {
@@ -175,6 +184,10 @@ int main() {
     // Initialize GPIO setup
     setup();
 
+    // Calibrate the board
+    calibrateTrolley();
+    
+    
     // Run continuously until the user decides to exit
     do {
         // Input the ending chess square
