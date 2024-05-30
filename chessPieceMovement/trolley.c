@@ -9,8 +9,8 @@
 #define dirPin2 4     // BCM GPIO 4
 #define stepPin2 25   // BCM GPIO 25
 #define motors 13     // Placeholder for motor enable pin
-#define stepsPerRevolution 180
-#define stepsPerRevolutionDiag 360
+#define stepsPerRevolution 250
+#define stepsPerRevolutionDiag stepsPerRevolution * 2
 
 // Direction arrays
 // CW = 1 CCW = 0 error = -1
@@ -100,6 +100,16 @@ void moveTrolleyDiagDR(int n) {
     moveTrolleyByN(DDOWNR, n);
 }
 
+// Turn magnet on
+void magnetOn() {
+    gpioWrite(mag_pin, PI_HIGH);
+}
+
+// Turn magnet off
+void magnetOff() {
+    gpioWrite(mag_pin, PI_LOW);
+}
+
 // Function to translate chess notation to Cartesian coordinates
 void chessToCartesian(char *chessPosition, int *x, int *y) {
     // Ensure the input string is in the correct format (e.g., "a1" to "h8")
@@ -152,40 +162,56 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     }
 }
 
+void moveChessPiece(int currentX, int currentY, int startX, int startY, int endX, int endY) {
+	calculateMovement(currentX, currentY, startX, startY);
+	gpioDelay(5000);
+	magnetOn();
+
+	calculateMovement(startX, startY, endX, endY);
+	gpioDelay(5000);
+	magnetOff();
+}
+
 int main() {
+
+    char startSquare[3];
     char endSquare[3];
-    char exitKey;
-    int currentX = 0, currentY = 0;  // Assuming starting at a1 (0,7)
+    int currentX = 0, currentY = 0; // Assuming starting at a1
 
     // Initialize GPIO setup
     setup();
 
     // Run continuously until the user decides to exit
-    do {
+    while (1) {
         // Input the ending chess square
-        printf("Enter the ending chess square (e.g., a1): ");
+	    
+        printf("Enter the starting chess square (or 'q' to quit): ");
+	scanf("%s", startSquare);
+
+        printf("Enter the ending chess square (or 'q' to quit): ");
         scanf("%s", endSquare);
-        
-        // Translate chess notation to Cartesian coordinates for the ending square
+
+        // Check if the user wants to quit
+        if (strcmp(endSquare, "q") == 0) {
+            break;
+        }
+	
+        int startX, startY;
+        chessToCartesian(startSquare, &startX, &startY);
+
         int endX, endY;
         chessToCartesian(endSquare, &endX, &endY);
+       
+        // Move the chess piece
+        moveChessPiece(currentX, currentY, startX, startY, endX, endY);
 
-        gpioWrite(mag_pin, PI_HIGH);
-        // Calculate and move the trolley based on the movement between squares
-        calculateMovement(currentX, currentY, endX, endY);
-
-    	gpioWrite(mag_pin, PI_LOW);
-        // Update the current position
+        // Update current position
         currentX = endX;
         currentY = endY;
+    }
 
-    } while (exitKey != 'q');
-
-    // Move back to the starting position (a1)
-    printf("Returning to starting position (a1)...\n");
-    int startX = 0, startY = 0; // a1 in Cartesian coordinates
-    calculateMovement(currentX, currentY, startX, startY);
-
+    // Return to starting position (a1)
+    calculateMovement(currentX, currentY, 0, 0);
     gpioTerminate(); // Clean up GPIO resources
     return 0;
 }
