@@ -64,64 +64,61 @@ void setup() {
     gpioWrite(motors, PI_LOW);
 }
 
-void moveTrolley(const int dir[]) {
+void moveTrolley(const int dir[], int n) {
     gpioWrite(dirPin, dir[0]);
     gpioWrite(dirPin2, dir[1]);
-    int steps;
-    if (dir[2] != dir[3]) {
-	steps = stepsPerRevolutionDiag;
-    } else {
-	steps = stepsPerRevolution;
-    }
+    int steps = (dir[2] != dir[3])?stepsPerRevolutionDiag:stepsPerRevolution;
 
-    for (int x = 0; x < steps; x++) {
+    for (int x = 0; x < steps * n; x++) {
         gpioWrite(stepPin, dir[2]);
         gpioWrite(stepPin2, dir[3]);
         gpioDelay(1000);  // Delay in microseconds
         gpioWrite(stepPin, 0);
         gpioWrite(stepPin2, 0);
         gpioDelay(1000);
+        gpioDelay(50000);
     }
 }
 
+// currently not in use
 void moveTrolleyByN(const int dir[], int n) {
     for (int i = 0; i < n; i++) {
-        moveTrolley(dir);
+        moveTrolley(dir, n);
         gpioDelay(50000);  // Delay in microseconds
     }
     
 }
 
 void moveTrolleyDown(int n) {
-    moveTrolleyByN(YDOWN, n);
+    moveTrolley(YDOWN, n);
 }
 
 void moveTrolleyUp(int n) {
-    moveTrolleyByN(YUP, n);
+    moveTrolley(YUP, n);
 }
 
 void moveTrolleyRight(int n) {
-    moveTrolleyByN(XRIGHT, n);
+    moveTrolley(XRIGHT, n);
 }
 
 void moveTrolleyLeft(int n) {
-    moveTrolleyByN(XLEFT, n);
+    moveTrolley(XLEFT, n);
 }
 
 void moveTrolleyDiagUL(int n) {
-    moveTrolleyByN(DUPL, n);
+    moveTrolley(DUPL, n);
 }
 
 void moveTrolleyDiagDL(int n) {
-    moveTrolleyByN(DDOWNL, n);
+    moveTrolley(DDOWNL, n);
 }
 
 void moveTrolleyDiagUR(int n) {
-    moveTrolleyByN(DUPR, n);
+    moveTrolley(DUPR, n);
 }
 
 void moveTrolleyDiagDR(int n) {
-    moveTrolleyByN(DDOWNR, n);
+    moveTrolley(DDOWNR, n);
 }
 
 // Function to translate chess notation to Cartesian coordinates
