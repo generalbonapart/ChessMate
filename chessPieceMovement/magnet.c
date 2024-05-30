@@ -20,10 +20,10 @@
  int YUP[4]    =   {0, 0, 1, 1};
  int XLEFT[4]  =   {1, 0, 1, 1};
  int XRIGHT[4] =   {0, 1, 1, 1};
- int DUPR[4]   =   {1, 0, 1, 0}; // motor A is on motor B is off, last two values
+ int DUPR[4]   =   {0, 0, 1, 0}; // motor A is on motor B is off, last two values
  int DUPL[4]   =   {0, 1, 0, 1};
- int DDOWNR[4] =   {0, 0, 1, 0}; 
- int DDOWNL[4] =   {0, 0, 0, 1};
+ int DDOWNR[4] =   {0, 0, 0, 1}; 
+ int DDOWNL[4] =   {1, 0, 1, 0};
 
 void setup() {
     if (gpioInitialise() < 0) {
@@ -63,8 +63,9 @@ void moveTrolley(const int dir[]) {
 void moveTrolleyByN(const int dir[], int n) {
     for (int i = 0; i < n; i++) {
         moveTrolley(dir);
-        gpioDelay(500000);  // Delay in microseconds
+        gpioDelay(50000);  // Delay in microseconds
     }
+    
 }
 
 void moveTrolleyDown(int n) {
@@ -83,19 +84,19 @@ void moveTrolleyLeft(int n) {
     moveTrolleyByN(XLEFT, n);
 }
 
-void moveTrolleyLeftDiagUp(int n) {
+void moveTrolleyDiagUL(int n) {
     moveTrolleyByN(DUPL, n);
 }
 
-void moveTrolleyLeftDiagDown(int n) {
+void moveTrolleyDiagDL(int n) {
     moveTrolleyByN(DDOWNL, n);
 }
 
-void moveTrolleyRightDiagUp(int n) {
+void moveTrolleyDiagUR(int n) {
     moveTrolleyByN(DUPR, n);
 }
 
-void moveTrolleyRightDiagDown(int n) {
+void moveTrolleyDiagDR(int n) {
     moveTrolleyByN(DDOWNR, n);
 }
 
@@ -113,7 +114,7 @@ void chessToCartesian(char *chessPosition, int *x, int *y) {
     *x = chessPosition[0] - 'a';
 
     // Convert the numeric part of the chess notation to y coordinate
-    *y = chessPosition[1] - '0';
+    *y = (chessPosition[1] - '0') - 1;
 }
 
 // Function to calculate movement from one chess square to another
@@ -126,15 +127,15 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     // Move the trolley based on the calculated displacements
     if (deltaX == deltaY) {
         if (deltaX > 0) {
-            moveTrolleyRightDiagUp(deltaX);
+            moveTrolleyDiagUR(deltaX);
         } else {
-            moveTrolleyRightDiagDown(-deltaX);
+            moveTrolleyDiagDL(-deltaX);
         }
     } else if (deltaX == -deltaY) {
         if (deltaX > 0) {
-            moveTrolleyLeftDiagUp(deltaX);
+            moveTrolleyDiagUL(deltaX);
         } else {
-            moveTrolleyLeftDiagDown(-deltaX);
+            moveTrolleyDiagDR(-deltaX);
         }
     } else {
         if (deltaX > 0) {
@@ -169,16 +170,14 @@ int main() {
         int endX, endY;
         chessToCartesian(endSquare, &endX, &endY);
 
+        gpioWrite(mag_pin, PI_HIGH);
         // Calculate and move the trolley based on the movement between squares
         calculateMovement(currentX, currentY, endX, endY);
 
+    	gpioWrite(mag_pin, PI_LOW);
         // Update the current position
         currentX = endX;
         currentY = endY;
-
-        // Prompt the user to exit or continue
-        printf("Press 'q' to quit or any other key to continue: ");
-        scanf(" %c", &exitKey); // Note: space before %c to consume whitespace
 
     } while (exitKey != 'q');
 
