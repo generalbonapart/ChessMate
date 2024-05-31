@@ -40,64 +40,69 @@ void setup() {
     gpioWrite(motors, PI_LOW);
 }
 
-void moveTrolley(const int dir[]) {
+void moveTrolley(int dir[], int steps) {
     gpioWrite(dirPin, dir[0]);
     gpioWrite(dirPin2, dir[1]);
-    int steps;
-    if (dir[2] != dir[3]) {
-	steps = stepsPerRevolutionDiag;
-    } else {
-	steps = stepsPerRevolution;
-    }
 
     for (int x = 0; x < steps; x++) {
-        gpioWrite(stepPin, dir[2]);
-        gpioWrite(stepPin2, dir[3]);
-        gpioDelay(1000);  // Delay in microseconds
-        gpioWrite(stepPin, 0);
-        gpioWrite(stepPin2, 0);
-        gpioDelay(1000);
+        if (dir[2]) gpioWrite(stepPin, PI_HIGH);
+        if (dir[3]) gpioWrite(stepPin2, PI_HIGH);
+        gpioDelay(1500);  // Delay in microseconds
+        if (dir[2]) gpioWrite(stepPin, PI_LOW);
+        if (dir[3]) gpioWrite(stepPin2, PI_LOW);
+        gpioDelay(1500);
     }
 }
 
-void moveTrolleyByN(const int dir[], int n) {
+void moveTrolleyByN(int dir[], int n, int steps) {
     for (int i = 0; i < n; i++) {
-        moveTrolley(dir);
+        moveTrolley(dir, steps);
         gpioDelay(50000);  // Delay in microseconds
     }
-    
 }
 
 void moveTrolleyDown(int n) {
-    moveTrolleyByN(YDOWN, n);
+    moveTrolleyByN(YDOWN, n, stepsPerRevolution);
 }
 
 void moveTrolleyUp(int n) {
-    moveTrolleyByN(YUP, n);
+    moveTrolleyByN(YUP, n, stepsPerRevolution);
 }
 
 void moveTrolleyRight(int n) {
-    moveTrolleyByN(XRIGHT, n);
+    moveTrolleyByN(XRIGHT, n, stepsPerRevolution);
 }
 
 void moveTrolleyLeft(int n) {
-    moveTrolleyByN(XLEFT, n);
+    moveTrolleyByN(XLEFT, n, stepsPerRevolution);
 }
 
 void moveTrolleyDiagUL(int n) {
-    moveTrolleyByN(DUPL, n);
+    moveTrolleyByN(DUPL, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagDL(int n) {
-    moveTrolleyByN(DDOWNL, n);
+    moveTrolleyByN(DDOWNL, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagUR(int n) {
-    moveTrolleyByN(DUPR, n);
+    moveTrolleyByN(DUPR, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagDR(int n) {
-    moveTrolleyByN(DDOWNR, n);
+    moveTrolleyByN(DDOWNR, n, stepsPerRevolution*2);
+}
+
+void moveKnight(int deltaX, int deltaY) {
+    if (abs(deltaX) == 2 && abs(deltaY) == 1) {
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, abs(deltaX), stepsPerRevolution);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
+    } else if (abs(deltaX) == 1 && abs(deltaY) == 2) {
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, abs(deltaY), stepsPerRevolution);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
+    }
 }
 
 // Turn magnet on
@@ -135,7 +140,9 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     
     printf("DeltaX: %d, DeltaY: %d\n", deltaX, deltaY);
     // Move the trolley based on the calculated displacements
-    if (deltaX == deltaY) {
+    if ((abs(deltaX) == 2 && abs(deltaY) == 1) || (abs(deltaX) == 1 && abs(deltaY) == 2)) {
+	    moveKnight(deltaX, deltaY);
+    } else if (deltaX == deltaY) {
         if (deltaX > 0) {
             moveTrolleyDiagUR(deltaX);
         } else {
@@ -163,13 +170,26 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
 }
 
 void moveChessPiece(int currentX, int currentY, int startX, int startY, int endX, int endY) {
-	calculateMovement(currentX, currentY, startX, startY);
-	gpioDelay(5000);
-	magnetOn();
+    // Move to the initial target square
+    calculateMovement(currentX, currentY, startX, startY);
 
-	calculateMovement(startX, startY, endX, endY);
-	gpioDelay(5000);
-	magnetOff();
+    // Turn magnet on (pickup piece)
+    magnetOn();
+
+    //int moveType = isLegalMove(startX, startY, endX, endY);
+
+    // Move to the end square
+    /*
+    if (moveType == 2) { // Knight move
+	printf("Move type knight \n");
+        moveKnight(startX, startY, endX, endY);
+    } else { // Rook or bishop move
+        calculateMovement(startX, startY, endX, endY);
+    }
+    */
+    calculateMovement(startX, startY, endX, endY);
+    // Turn magnet off (drop piece)
+    magnetOff();
 }
 
 int main() {
@@ -187,6 +207,9 @@ int main() {
 	    
         printf("Enter the starting chess square (or 'q' to quit): ");
 	scanf("%s", startSquare);
+	if (strcmp(startSquare, "q") == 0) {
+		break;
+	}
 
         printf("Enter the ending chess square (or 'q' to quit): ");
         scanf("%s", endSquare);
