@@ -9,8 +9,8 @@
 #define dirPin2 4     // BCM GPIO 4
 #define stepPin2 25   // BCM GPIO 25
 #define motors 13     // Placeholder for motor enable pin
-#define stepsPerRevolution 180
-#define stepsPerRevolutionDiag 360
+#define stepsPerRevolution 250
+#define stepsPerRevolutionDiag stepsPerRevolution * 2
 
 // Direction arrays
 // CW = 1 CCW = 0 error = -1
@@ -40,64 +40,79 @@ void setup() {
     gpioWrite(motors, PI_LOW);
 }
 
-void moveTrolley(const int dir[]) {
+void moveTrolley(int dir[], int steps) {
     gpioWrite(dirPin, dir[0]);
     gpioWrite(dirPin2, dir[1]);
-    int steps;
-    if (dir[2] != dir[3]) {
-	steps = stepsPerRevolutionDiag;
-    } else {
-	steps = stepsPerRevolution;
-    }
 
     for (int x = 0; x < steps; x++) {
-        gpioWrite(stepPin, dir[2]);
-        gpioWrite(stepPin2, dir[3]);
-        gpioDelay(1000);  // Delay in microseconds
-        gpioWrite(stepPin, 0);
-        gpioWrite(stepPin2, 0);
-        gpioDelay(1000);
+        if (dir[2]) gpioWrite(stepPin, PI_HIGH);
+        if (dir[3]) gpioWrite(stepPin2, PI_HIGH);
+        gpioDelay(1500);  // Delay in microseconds
+        if (dir[2]) gpioWrite(stepPin, PI_LOW);
+        if (dir[3]) gpioWrite(stepPin2, PI_LOW);
+        gpioDelay(1500);
     }
 }
 
-void moveTrolleyByN(const int dir[], int n) {
+void moveTrolleyByN(int dir[], int n, int steps) {
     for (int i = 0; i < n; i++) {
-        moveTrolley(dir);
+        moveTrolley(dir, steps);
         gpioDelay(50000);  // Delay in microseconds
     }
-    
 }
 
 void moveTrolleyDown(int n) {
-    moveTrolleyByN(YDOWN, n);
+    moveTrolleyByN(YDOWN, n, stepsPerRevolution);
 }
 
 void moveTrolleyUp(int n) {
-    moveTrolleyByN(YUP, n);
+    moveTrolleyByN(YUP, n, stepsPerRevolution);
 }
 
 void moveTrolleyRight(int n) {
-    moveTrolleyByN(XRIGHT, n);
+    moveTrolleyByN(XRIGHT, n, stepsPerRevolution);
 }
 
 void moveTrolleyLeft(int n) {
-    moveTrolleyByN(XLEFT, n);
+    moveTrolleyByN(XLEFT, n, stepsPerRevolution);
 }
 
 void moveTrolleyDiagUL(int n) {
-    moveTrolleyByN(DUPL, n);
+    moveTrolleyByN(DUPL, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagDL(int n) {
-    moveTrolleyByN(DDOWNL, n);
+    moveTrolleyByN(DDOWNL, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagUR(int n) {
-    moveTrolleyByN(DUPR, n);
+    moveTrolleyByN(DUPR, n, stepsPerRevolution*2);
 }
 
 void moveTrolleyDiagDR(int n) {
-    moveTrolleyByN(DDOWNR, n);
+    moveTrolleyByN(DDOWNR, n, stepsPerRevolution*2);
+}
+
+void moveKnight(int deltaX, int deltaY) {
+    if (abs(deltaX) == 2 && abs(deltaY) == 1) {
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, abs(deltaX), stepsPerRevolution);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
+    } else if (abs(deltaX) == 1 && abs(deltaY) == 2) {
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, abs(deltaY), stepsPerRevolution);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
+    }
+}
+
+// Turn magnet on
+void magnetOn() {
+    gpioWrite(mag_pin, PI_HIGH);
+}
+
+// Turn magnet off
+void magnetOff() {
+    gpioWrite(mag_pin, PI_LOW);
 }
 
 // Function to translate chess notation to Cartesian coordinates
@@ -125,7 +140,9 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     
     printf("DeltaX: %d, DeltaY: %d\n", deltaX, deltaY);
     // Move the trolley based on the calculated displacements
-    if (deltaX == deltaY) {
+    if ((abs(deltaX) == 2 && abs(deltaY) == 1) || (abs(deltaX) == 1 && abs(deltaY) == 2)) {
+	    moveKnight(deltaX, deltaY);
+    } else if (deltaX == deltaY) {
         if (deltaX > 0) {
             moveTrolleyDiagUR(deltaX);
         } else {
@@ -152,40 +169,72 @@ void calculateMovement(int x1, int y1, int x2, int y2) {
     }
 }
 
+void moveChessPiece(int currentX, int currentY, int startX, int startY, int endX, int endY) {
+    // Move to the initial target square
+    calculateMovement(currentX, currentY, startX, startY);
+
+    // Turn magnet on (pickup piece)
+    magnetOn();
+
+    //int moveType = isLegalMove(startX, startY, endX, endY);
+
+    // Move to the end square
+    /*
+    if (moveType == 2) { // Knight move
+	printf("Move type knight \n");
+        moveKnight(startX, startY, endX, endY);
+    } else { // Rook or bishop move
+        calculateMovement(startX, startY, endX, endY);
+    }
+    */
+    calculateMovement(startX, startY, endX, endY);
+    // Turn magnet off (drop piece)
+    magnetOff();
+}
+
 int main() {
+
+    char startSquare[3];
     char endSquare[3];
-    char exitKey;
-    int currentX = 0, currentY = 0;  // Assuming starting at a1 (0,7)
+    int currentX = 0, currentY = 0; // Assuming starting at a1
 
     // Initialize GPIO setup
     setup();
 
     // Run continuously until the user decides to exit
-    do {
+    while (1) {
         // Input the ending chess square
-        printf("Enter the ending chess square (e.g., a1): ");
+	    
+        printf("Enter the starting chess square (or 'q' to quit): ");
+	scanf("%s", startSquare);
+	if (strcmp(startSquare, "q") == 0) {
+		break;
+	}
+
+        printf("Enter the ending chess square (or 'q' to quit): ");
         scanf("%s", endSquare);
-        
-        // Translate chess notation to Cartesian coordinates for the ending square
+
+        // Check if the user wants to quit
+        if (strcmp(endSquare, "q") == 0) {
+            break;
+        }
+	
+        int startX, startY;
+        chessToCartesian(startSquare, &startX, &startY);
+
         int endX, endY;
         chessToCartesian(endSquare, &endX, &endY);
+       
+        // Move the chess piece
+        moveChessPiece(currentX, currentY, startX, startY, endX, endY);
 
-        gpioWrite(mag_pin, PI_HIGH);
-        // Calculate and move the trolley based on the movement between squares
-        calculateMovement(currentX, currentY, endX, endY);
-
-    	gpioWrite(mag_pin, PI_LOW);
-        // Update the current position
+        // Update current position
         currentX = endX;
         currentY = endY;
+    }
 
-    } while (exitKey != 'q');
-
-    // Move back to the starting position (a1)
-    printf("Returning to starting position (a1)...\n");
-    int startX = 0, startY = 0; // a1 in Cartesian coordinates
-    calculateMovement(currentX, currentY, startX, startY);
-
+    // Return to starting position (a1)
+    calculateMovement(currentX, currentY, 0, 0);
     gpioTerminate(); // Clean up GPIO resources
     return 0;
 }
