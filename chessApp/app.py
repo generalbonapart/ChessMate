@@ -1,15 +1,13 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
 from lichess_api import launch_game
 from models import GameParams
-from dotenv import load_dotenv
-load_dotenv()
-import time
-import os
-import requests
-
-from authlib.integrations.flask_client import OAuth
 
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
+load_dotenv()
+
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['LICHESS_CLIENT_ID'] =  os.getenv("LICHESS_CLIENT_ID")
