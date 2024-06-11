@@ -130,8 +130,8 @@ def clear_file(file_path):
         file.truncate(0)
     print(f"Contents of {file_path} have been deleted.")
 
-def launch_game(parameters: GameParams):
-    session = berserk.TokenSession(USER_API_TOKEN)
+def launch_game(parameters: GameParams, user_api_token):
+    session = berserk.TokenSession(user_api_token)
     global client
     client = berserk.Client(session=session)
     send_challenge(parameters)
