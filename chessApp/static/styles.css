@@ -78,7 +78,8 @@ button:hover {
 }
 
 .logout-container {
-    position: absolute;
+    position: relative;
+    top: 20px;
     bottom: 20px;
     width: 100%;
     text-align: center;
