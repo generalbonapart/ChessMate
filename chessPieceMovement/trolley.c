@@ -9,7 +9,7 @@
 #define dirPin2 4     // BCM GPIO 4
 #define stepPin2 25   // BCM GPIO 25
 #define motors 13     // Placeholder for motor enable pin
-#define stepsPerRevolution 250
+#define stepsPerRevolution 240
 #define stepsPerRevolutionDiag stepsPerRevolution * 2
 
 // Direction arrays
@@ -47,17 +47,17 @@ void moveTrolley(int dir[], int steps) {
     for (int x = 0; x < steps; x++) {
         if (dir[2]) gpioWrite(stepPin, PI_HIGH);
         if (dir[3]) gpioWrite(stepPin2, PI_HIGH);
-        gpioDelay(1500);  // Delay in microseconds
+        gpioDelay(1000);  // Delay in microseconds
         if (dir[2]) gpioWrite(stepPin, PI_LOW);
         if (dir[3]) gpioWrite(stepPin2, PI_LOW);
-        gpioDelay(1500);
+        gpioDelay(1000);
     }
 }
 
 void moveTrolleyByN(int dir[], int n, int steps) {
     for (int i = 0; i < n; i++) {
         moveTrolley(dir, steps);
-        gpioDelay(50000);  // Delay in microseconds
+        //gpioDelay(500000);  // Delay in microseconds
     }
 }
 
