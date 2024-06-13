@@ -6,7 +6,10 @@ import threading
 import csv
 import json
 from models import GameParams
-from my_token import USER_API_TOKEN
+# from lichess.format import PGN
+# import chess.pgn
+# from io import StringIO
+#from my_token import USER_API_TOKEN
 # Monkey-patch requests to avoid using simplejson
 from requests.models import Response
 def patched_json(self, **kwargs):
@@ -26,7 +29,7 @@ def send_challenge(params: GameParams):
 
     parameters = {
         "clock_limit": params.time,         # Time limit for each player in seconds
-        "clock_increment": 5,      # Time increment per move in seconds
+        "clock_increment": params.time_inc,      # Time increment per move in seconds
         "days": None,               # Number of days the challenge is valid (None for no limit)
         "color": params.side,           # Choose color randomly (can also be "white" or "black")
         "variant": "standard",      # Chess variant (standard, chess960, etc.)
@@ -58,7 +61,13 @@ def visit_gameURL(game_id):
 
 # Function to get game moves
 def get_game_moves():
-    return moves_string
+    last = None
+    for event in client.board.stream_game_state(game_id):
+        if 'state' in event:
+            moves = event['state']['moves']
+            if moves:
+                last = moves.split()[-1]
+            return last
 
 def add_user_move(move):
     global user_move
@@ -75,14 +84,6 @@ def is_my_turn(update):
         return update["game"]["isMyTurn"]
     return False
 
-# Function to add the last move to a CSV file
-def add_last_move_to_csv():
-    move_history = get_game_moves()
-    with open('game_history.csv', 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([move_history])
-    return move_history
-
 # Function to post user moves
 def post_user_moves(stop_threads):
     global game_not_over, user_move
@@ -91,20 +92,18 @@ def post_user_moves(stop_threads):
             break
         for update in client.board.stream_incoming_events():
             if is_my_turn(update) and game_not_over:
-                move_history = get_game_moves()
-                if move_history:
-                    print(move_history)
-                
-                #move = input("Enter your move (e.g., e2e4): ")
+
                 while not user_move:
-                    print("Waiting for move")
-                    time.sleep(1)
+                    time.sleep(0.01)
                 if user_move == 'q':
                     resign_game()
                     game_not_over = False
                     break
-                print(f"Posting Move {user_move}")
-                client.board.make_move(game_id, user_move)
+                #print(f"Posting Move {user_move}\n")
+                try:
+                    client.board.make_move(game_id, user_move)
+                except:
+                    pass
                 user_move = None
                 break
         time.sleep(3)
@@ -116,22 +115,16 @@ def main_thread():
             moves_string = update['state']['moves']
             status = handle_game_state_update(update)
             game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
-            time.sleep(5)
             break
-    time.sleep(3)
+        time.sleep(1)
 
+    time.sleep(3)
     print("Game Over!")
     game_not_over = True
     client = None
 
-# Function to clear the contents of a file
-def clear_file(file_path):
-    with open(file_path, 'w') as file:
-        file.truncate(0)
-    print(f"Contents of {file_path} have been deleted.")
-
-def launch_game(parameters: GameParams):
-    session = berserk.TokenSession(USER_API_TOKEN)
+def launch_game(parameters: GameParams, user_api_token):
+    session = berserk.TokenSession(user_api_token)
     global client
     client = berserk.Client(session=session)
     send_challenge(parameters)
