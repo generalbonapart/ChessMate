@@ -1,16 +1,17 @@
 import cv2 as cv
 import numpy as np
 
-img = cv.imread('chessboard_unwarped.jpg')
-img = cv.resize(img, (1000, 1000))
+img = cv.imread('test.jpg')
+img = cv.resize(img, (800, 800))
 
 assert img is not None, "file could not be read, check with os.path.exists()"
 rows,cols,ch = img.shape
-pts1 = np.float32([[124, 150],[835,150],[150, 920],[935,920]])
-pts2 = np.float32([[0,0],[500,0],[0,500],[500,500]])
+pts1 = np.float32([[149, 84],[653, 11],[27,770],[793,769]])
+pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
 M = cv.getPerspectiveTransform(pts1,pts2)
-dst = cv.warpPerspective(img,M,(500,500))
+dst = cv.warpPerspective(img,M,(800,800))
 
+cv.imwrite('output.jpg', dst)
 
 # Display the input and output images
 cv.imshow('Input', img)

@@ -17,28 +17,61 @@ def print_board_state(board_state):
     for row in board_state:
         print(" ".join(piece if piece is not None else '.' for piece in row))
 
+def is_circle_like(contour, circularity_threshold=0.8):
+    """ Determine if a contour is circle-like based on its circularity. """
+    perimeter = cv2.arcLength(contour, True)
+    area = cv2.contourArea(contour)
+    if perimeter == 0 or area == 0:
+        return False
+    circularity = 4 * np.pi * (area / (perimeter ** 2))
+    return circularity > circularity_threshold
+
+def is_curved(contour, threshold=0.05):
+    perimeter = cv2.arcLength(contour, True)
+    area = cv2.contourArea(contour)
+    if area == 0:
+        return False
+    ratio = perimeter**2 / (4 * np.pi * area)
+    return ratio > threshold
+
 def invert_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
     kernel = np.ones((3))
     img_dilated = cv2.dilate(edges, kernel, iterations=1)
 
+    contours, _ = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    mask = np.ones_like(gray) * 255  # White background
+    # Fill curved contours with black
+    for cnt in contours:
+        if is_curved(cnt):
+            cv2.fillPoly(mask, [cnt], 0)
+
+    cv2.imshow('inverted', mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
     # Filter out all numbers and noise to isolate only boxes
-    countours, _ = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    countours = countours[0] if len(countours) == 2 else countours[1]
+    contours, _ = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = contours[0] if len(contours) == 2 else contours[1]
+    for c in contours:
+        cv2.drawContours(img_dilated, [c], -1, (0,0,0), thickness=cv2.FILLED)
+    '''
     for c in countours:
         area = cv2.contourArea(c)
         if area < 1000:
-            cv2.drawContours(img_dilated, [c], -1, (0,0,0), 3)
+            cv2.drawContours(img_dilated, [c], -1, (0,0,0), thickness=cv2.FILLED)
 
     # Fix horizontal and vertical lines
     vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,5))
-    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, vertical_kernel, iterations=9)
+    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, vertical_kernel, iterations=10)
     horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,1))
-    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, horizontal_kernel, iterations=4)
+    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, horizontal_kernel, iterations=10)
+    '''
 
     # Sort by top to bottom and each row by left to right
     invert = 255 - img_dilated
+ 
     return invert
     
 def divide_board_into_squares(board_image, grid_size=8):
@@ -90,10 +123,9 @@ def detect_move(previous_board, current_board):
         return start + end, current_board
     return None, current_board
 
-image = cv2.imread('startState.jpg')
+image = cv2.imread('output.jpg')
 image = cv2.resize(image, (800, 800))
 board_state = initialize_board()
-print_board_state(board_state)
 invert = invert_image(image)
 squares = divide_board_into_squares(invert)
 new_board_state = detect_pieces(squares, board_state)
