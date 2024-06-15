@@ -11,10 +11,12 @@ pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
 M = cv.getPerspectiveTransform(pts1,pts2)
 dst = cv.warpPerspective(img,M,(800,800))
 
-cv.imwrite('output.jpg', dst)
+rotated_image = cv.rotate(dst, cv.ROTATE_90_CLOCKWISE)
+
+cv.imwrite('output.jpg', rotated_image)
 
 # Display the input and output images
 cv.imshow('Input', img)
-cv.imshow('Output', dst)
+cv.imshow('Output', rotated_image)
 cv.waitKey(0)
 cv.destroyAllWindows()

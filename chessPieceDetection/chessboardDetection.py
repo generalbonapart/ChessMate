@@ -16,64 +16,7 @@ def initialize_board():
 def print_board_state(board_state):
     for row in board_state:
         print(" ".join(piece if piece is not None else '.' for piece in row))
-
-def is_circle_like(contour, circularity_threshold=0.8):
-    """ Determine if a contour is circle-like based on its circularity. """
-    perimeter = cv2.arcLength(contour, True)
-    area = cv2.contourArea(contour)
-    if perimeter == 0 or area == 0:
-        return False
-    circularity = 4 * np.pi * (area / (perimeter ** 2))
-    return circularity > circularity_threshold
-
-def is_curved(contour, threshold=0.05):
-    perimeter = cv2.arcLength(contour, True)
-    area = cv2.contourArea(contour)
-    if area == 0:
-        return False
-    ratio = perimeter**2 / (4 * np.pi * area)
-    return ratio > threshold
-
-def invert_image(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-    kernel = np.ones((3))
-    img_dilated = cv2.dilate(edges, kernel, iterations=1)
-
-    contours, _ = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    mask = np.ones_like(gray) * 255  # White background
-    # Fill curved contours with black
-    for cnt in contours:
-        if is_curved(cnt):
-            cv2.fillPoly(mask, [cnt], 0)
-
-    cv2.imshow('inverted', mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    # Filter out all numbers and noise to isolate only boxes
-    contours, _ = cv2.findContours(img_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours = contours[0] if len(contours) == 2 else contours[1]
-    for c in contours:
-        cv2.drawContours(img_dilated, [c], -1, (0,0,0), thickness=cv2.FILLED)
-    '''
-    for c in countours:
-        area = cv2.contourArea(c)
-        if area < 1000:
-            cv2.drawContours(img_dilated, [c], -1, (0,0,0), thickness=cv2.FILLED)
-
-    # Fix horizontal and vertical lines
-    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1,5))
-    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, vertical_kernel, iterations=10)
-    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,1))
-    img_dilated = cv2.morphologyEx(img_dilated, cv2.MORPH_CLOSE, horizontal_kernel, iterations=10)
-    '''
-
-    # Sort by top to bottom and each row by left to right
-    invert = 255 - img_dilated
- 
-    return invert
-    
+        
 def divide_board_into_squares(board_image, grid_size=8):
     height, width = board_image.shape[:2]
     square_size = width // grid_size
@@ -91,8 +34,8 @@ def detect_pieces(squares, board_state):
 
     for i, row in enumerate(squares):
         for j, square in enumerate(row):
-            black_pixels = np.sum(square == 0)
-            if black_pixels > 1500:
+            white_pixels = np.sum(square == 255)
+            if white_pixels > 500:
                 if new_board_state [i][j] in ['p', 'r', 'n', 'b', 'q', 'k', 'P', 'R', 'N', 'B', 'Q', 'K']:
                     continue
                 else:
@@ -113,7 +56,7 @@ def detect_move(previous_board, current_board):
                     end_pos = (i, j)
                 if previous_board[i][j] is not None:
                     start_pos = (i, j)
-                    moved_piece = previous_board[start_pos[0]][end_pos[1]]
+                    moved_piece = previous_board[start_pos[0]][start_pos[1]]
 
     if start_pos and end_pos:
         current_board[end_pos[0]][end_pos[1]] = moved_piece
@@ -123,13 +66,48 @@ def detect_move(previous_board, current_board):
         return start + end, current_board
     return None, current_board
 
-image = cv2.imread('output.jpg')
-image = cv2.resize(image, (800, 800))
+# Generate a combined mask for detecting black and white pieces
+def get_combined_mask(image):
+    # Convert the image to HSV color space
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Define color range for black pieces (these ranges might need adjustment)
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([180, 255, 50])
+
+    # Define color range for white pieces (these ranges might need adjustment)
+    lower_white = np.array([0, 0, 200])
+    upper_white = np.array([180, 55, 255])
+
+    # Create masks for black and white pieces
+    mask_black = cv2.inRange(hsv, lower_black, upper_black)
+    mask_white = cv2.inRange(hsv, lower_white, upper_white)
+
+    # Combine masks
+    combined_mask = cv2.bitwise_or(mask_black, mask_white)
+    
+    return combined_mask
+
+# Load the image
 board_state = initialize_board()
-invert = invert_image(image)
-squares = divide_board_into_squares(invert)
+image = cv2.imread('output1.jpg')
+assert image is not None, "Image not found"
+
+image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+
+# Combine masks
+combined_mask = get_combined_mask(image)
+
+squares = divide_board_into_squares(combined_mask)
 new_board_state = detect_pieces(squares, board_state)
 print_board_state(new_board_state)
 move, updated_board_state = detect_move(board_state, new_board_state)
 print_board_state(updated_board_state)
 print(move)
+
+# Show the results
+cv2.imshow('Original Image', image)
+cv2.imshow('Combined Mask', combined_mask)
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
