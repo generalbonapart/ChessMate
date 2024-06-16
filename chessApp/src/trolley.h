@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #define PORT 65432
 
-#define PI
+// #define PI
 
 #ifdef PI
 #include <pigpio.h>

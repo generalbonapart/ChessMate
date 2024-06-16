@@ -76,6 +76,10 @@ void moveTrolleyByN(int dir[], int n, int steps)
     }
 #else
     printf("Trolley: Making a move...\n");
+    for (int i = 0; i < n; i++)
+    {
+        usleep(50000); // Delay in microseconds
+    }
 #endif
 }
 
@@ -304,6 +308,9 @@ int main()
             // Move the chess piece
             moveChessPiece(&move);
         }
+        char message[] = "Done";
+        write(sock, message, strlen(message));
+
     }
 
     // Return to starting position (a1)

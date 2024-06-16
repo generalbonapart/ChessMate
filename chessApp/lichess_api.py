@@ -6,17 +6,13 @@ import threading
 import csv
 import json
 from models import GameParams
-# from lichess.format import PGN
-# import chess.pgn
-# from io import StringIO
-#from my_token import USER_API_TOKEN
+
 # Monkey-patch requests to avoid using simplejson
 from requests.models import Response
 def patched_json(self, **kwargs):
     return json.loads(self.text, **kwargs)
 Response.json = patched_json
 
-moves_string = ''
 URL = 'https://lichess.org/'
 game_not_over = True
 user_move = None
@@ -60,7 +56,7 @@ def visit_gameURL(game_id):
         print("Error:", e)
 
 # Function to get game moves
-def get_game_moves():
+def get_bot_move():
     last = None
     for event in client.board.stream_game_state(game_id):
         if 'state' in event:
@@ -109,10 +105,9 @@ def post_user_moves(stop_threads):
         time.sleep(3)
 
 def main_thread():
-    global client, game_not_over, moves_string
+    global client, game_not_over
     while game_not_over:
         for update in client.board.stream_game_state(game_id):
-            moves_string = update['state']['moves']
             status = handle_game_state_update(update)
             game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
             break
