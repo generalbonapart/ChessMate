@@ -116,7 +116,7 @@ def get_user_move():
     
     global board_state
 
-    command = ["rpicam-jpeg", "--output", OUTPUT_FILE]
+    command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
     try:
         subprocess.call(command)
     except Exception as e:

@@ -35,10 +35,10 @@ def handle_game_start(request):
         # Launch lichess game via API
         launch_game(params, user_api_token)
         # Run the C binary
-        with open("trolley_log.txt", 'w') as log:
-            process = subprocess.Popen(['./build/trolley'],
-                                    text=True)
-
+        # with open("trolley_log.txt", 'w') as log:
+        process = subprocess.Popen(['./build/trolley'], text=True)
+        process.wait()
+        
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

@@ -15,9 +15,11 @@ Response.json = patched_json
 
 URL = 'https://lichess.org/'
 game_not_over = True
+game_status = ''
 user_move = None
 game_id = None
 client = None
+move_accepted = None
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -82,7 +84,7 @@ def is_my_turn(update):
 
 # Function to post user moves
 def post_user_moves(stop_threads):
-    global game_not_over, user_move
+    global game_not_over, user_move, move_accepted
     while game_not_over:
         if stop_threads():
             break
@@ -98,18 +100,19 @@ def post_user_moves(stop_threads):
                 #print(f"Posting Move {user_move}\n")
                 try:
                     client.board.make_move(game_id, user_move)
+                    move_accepted = True
                 except:
-                    pass
+                    move_accepted = False
                 user_move = None
                 break
         time.sleep(3)
 
 def main_thread():
-    global client, game_not_over
+    global client, game_not_over, game_status
     while game_not_over:
         for update in client.board.stream_game_state(game_id):
-            status = handle_game_state_update(update)
-            game_not_over = False if status in ['draw', 'mate', 'resign', 'outoftime'] else True
+            game_status = handle_game_state_update(update)
+            game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
             break
         time.sleep(1)
 

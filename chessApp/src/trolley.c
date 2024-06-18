@@ -297,8 +297,13 @@ int main()
     {
         // Read the move from socket
         len = read(sock, buffer, 1024);
+        
         if (len > 0)
         {
+            if (strcmp(buffer, "Exit") == 0)
+            {
+                break;
+            }
             buffer[len] = '\0'; // Null-terminate the received string
             printf("Trolley: Move to make %s\n", buffer);
 
