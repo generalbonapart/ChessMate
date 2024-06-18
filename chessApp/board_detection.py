@@ -122,9 +122,15 @@ def get_user_move():
     except Exception as e:
         print(f"An error occurred: {e}")
     # Load the image
-    image = cv2.imread(IMAGE)
-    assert image is not None, "Image not found"
-    image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    image_raw = cv2.imread(IMAGE)
+    assert image_raw is not None, "Image not found"
+    image_raw = cv2.resize(image_raw, (800, 800))
+
+    pts1 = np.float32([[140, 107],[640, 47],[2, 795],[799,791]])
+    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    dst = cv2.warpPerspective(image_raw,M,(800,800))
+    image = cv2.rotate(dst, cv2.ROTATE_90_CLOCKWISE)
 
     # Detect move
     combined_mask = get_combined_mask(image)
