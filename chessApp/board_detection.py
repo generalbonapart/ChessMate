@@ -1,8 +1,12 @@
 import cv2
 import numpy as np
+import os
+import subprocess
 
 board_state = None
 IMAGE = 'images/board.jpg'
+CURDIR = os.getcwd()
+OUTPUT_FILE = os.path.join(CURDIR, IMAGE)
 
 def print_board_state():
     print("\n")
@@ -112,6 +116,11 @@ def get_user_move():
     
     global board_state
 
+    command = ["rpicam-jpeg", "--output", OUTPUT_FILE]
+    try:
+        subprocess.call(command)
+    except Exception as e:
+        print(f"An error occurred: {e}")
     # Load the image
     image = cv2.imread(IMAGE)
     assert image is not None, "Image not found"
