@@ -19,7 +19,8 @@ game_status = ''
 user_move = None
 game_id = None
 client = None
-move_accepted = None
+move_accepted = threading.Event()
+move_legal = False
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -57,6 +58,9 @@ def visit_gameURL(game_id):
     except requests.exceptions.RequestException as e:
         print("Error:", e)
 
+def is_move_legal():
+    return move_legal
+
 # Function to get game moves
 def get_bot_move():
     last = None
@@ -84,13 +88,12 @@ def is_my_turn(update):
 
 # Function to post user moves
 def post_user_moves(stop_threads):
-    global game_not_over, user_move, move_accepted
+    global game_not_over, user_move, move_accepted, move_legal
     while game_not_over:
         if stop_threads():
             break
         for update in client.board.stream_incoming_events():
             if is_my_turn(update) and game_not_over:
-
                 while not user_move:
                     time.sleep(0.01)
                 if user_move == 'q':
@@ -100,9 +103,10 @@ def post_user_moves(stop_threads):
                 #print(f"Posting Move {user_move}\n")
                 try:
                     client.board.make_move(game_id, user_move)
-                    move_accepted = True
+                    move_legal = True
                 except:
-                    move_accepted = False
+                    move_legal = False
+                move_accepted.set()
                 user_move = None
                 break
         time.sleep(3)
@@ -122,6 +126,7 @@ def main_thread():
     client = None
 
 def launch_game(parameters: GameParams, user_api_token):
+    global move_accepted, move_legal
     session = berserk.TokenSession(user_api_token)
     global client
     client = berserk.Client(session=session)
@@ -129,7 +134,8 @@ def launch_game(parameters: GameParams, user_api_token):
     stop_threads = False
     thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
     thread_main_game = threading.Thread(target=main_thread)
-
+    #move_accepted = threading.Event()
+    
     print("Starting game")
     thread_post_moves.start()
     thread_main_game.start()

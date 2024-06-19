@@ -2,7 +2,7 @@ import threading
 import socket
 import time
 from chess_board import convert_move_to_board_notation
-from lichess_api import add_user_move, get_bot_move, game_not_over, game_status, move_accepted
+from lichess_api import add_user_move, get_bot_move, game_not_over, game_status, move_accepted, is_move_legal
 from board_detection import board_detection_init, get_user_move, report_bot_move
 HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
@@ -21,14 +21,17 @@ def main_thread():
             user_move = 'q'
         else:
             user_move = get_user_move()
-            #user_move = input("User move: ")
-            add_user_move(user_move)
-            previous_move = user_move
-            
-        while move_accepted is None:
-            time.sleep(0.01)
-        
-        if move_accepted:
+        #user_move = input("User move: ")
+        add_user_move(user_move)
+        previous_move = user_move
+        if user_move == 'q':
+            conn.sendall(user_move.encode())
+            break
+        time.sleep(0.1)
+        move_accepted.wait()
+        move_accepted.clear()
+
+        if is_move_legal():
             bot_move = None
             while(bot_move is None or bot_move == previous_move):
                 time.sleep(1)

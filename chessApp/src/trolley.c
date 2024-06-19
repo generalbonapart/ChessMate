@@ -300,7 +300,7 @@ int main()
         
         if (len > 0)
         {
-            if (strcmp(buffer, "Exit") == 0)
+            if (buffer[0] == 'q')
             {
                 break;
             }
