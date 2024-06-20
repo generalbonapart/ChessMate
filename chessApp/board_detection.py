@@ -126,7 +126,7 @@ def get_user_move():
     assert image_raw is not None, "Image not found"
     image_raw = cv2.resize(image_raw, (800, 800))
 
-    pts1 = np.float32([[140, 107],[640, 47],[2, 795],[799,791]])
+    pts1 = np.float32([[130, 88],[657, 17],[70, 799],[799,774]])
     pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
     M = cv2.getPerspectiveTransform(pts1,pts2)
     dst = cv2.warpPerspective(image_raw,M,(800,800))
