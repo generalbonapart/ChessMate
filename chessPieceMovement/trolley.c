@@ -9,21 +9,20 @@
 #define dirPin2 4   // BCM GPIO 4
 #define stepPin2 25 // BCM GPIO 25
 #define motors 13   // Placeholder for motor enable pin
-#define stepsPerRevolution 240
-#define stepsPerRevolutionDiag stepsPerRevolution * 2
+#define STEPS 1600
 
 // Direction arrays
 // CW = 1 CCW = 0 error = -1
 // Motor a and b (direction and power)
 //            {aDir, bDir, aPower, bPower}
-int YDOWN[4] = {1, 1, 1, 1};
-int YUP[4] = {0, 0, 1, 1};
-int XLEFT[4] = {1, 0, 1, 1};
-int XRIGHT[4] = {0, 1, 1, 1};
-int DUPR[4] = {0, 0, 1, 0}; // motor A is on motor B is off, last two values
-int DUPL[4] = {0, 1, 0, 1};
-int DDOWNR[4] = {0, 0, 0, 1};
-int DDOWNL[4] = {1, 0, 1, 0};
+int XLEFT[4] = {1, 1, 1, 1};
+int XRIGHT[4] = {0, 0, 1, 1};
+int YUP[4] = {1, 0, 1, 1};
+int YDOWN[4] = {0, 1, 1, 1};
+int DUPL[4] = {0, 0, 1, 0}; // motor A is on motor B is off, last two values
+int DUPR[4] = {0, 1, 0, 1};
+int DDOWNL[4] = {0, 0, 0, 1};
+int DDOWNR[4] = {1, 0, 1, 0};
 
 void setup()
 {
@@ -47,18 +46,18 @@ void moveTrolley(int dir[], int steps)
     gpioWrite(dirPin, dir[0]);
     gpioWrite(dirPin2, dir[1]);
 
-    for (int x = 0; x < steps; x++)
+    for (int x = 0; x < STEPS; x++)
     {
         if (dir[2])
             gpioWrite(stepPin, PI_HIGH);
         if (dir[3])
             gpioWrite(stepPin2, PI_HIGH);
-        gpioDelay(1000); // Delay in microseconds
+        gpioDelay(100); // Delay in microseconds
         if (dir[2])
             gpioWrite(stepPin, PI_LOW);
         if (dir[3])
             gpioWrite(stepPin2, PI_LOW);
-        gpioDelay(1000);
+        gpioDelay(100);
     }
 }
 
@@ -67,63 +66,62 @@ void moveTrolleyByN(int dir[], int n, int steps)
     for (int i = 0; i < n; i++)
     {
         moveTrolley(dir, steps);
-        // gpioDelay(500000);  // Delay in microseconds
     }
 }
 
 void moveTrolleyDown(int n)
 {
-    moveTrolleyByN(YDOWN, n, stepsPerRevolution);
+    moveTrolleyByN(YDOWN, n, STEPS);
 }
 
 void moveTrolleyUp(int n)
 {
-    moveTrolleyByN(YUP, n, stepsPerRevolution);
+    moveTrolleyByN(YUP, n, STEPS);
 }
 
 void moveTrolleyRight(int n)
 {
-    moveTrolleyByN(XRIGHT, n, stepsPerRevolution);
+    moveTrolleyByN(XRIGHT, n, STEPS);
 }
 
 void moveTrolleyLeft(int n)
 {
-    moveTrolleyByN(XLEFT, n, stepsPerRevolution);
+    moveTrolleyByN(XLEFT, n, STEPS);
 }
 
 void moveTrolleyDiagUL(int n)
 {
-    moveTrolleyByN(DUPL, n, stepsPerRevolution * 2);
+    moveTrolleyByN(DUPL, n, STEPS * 2);
 }
 
 void moveTrolleyDiagDL(int n)
 {
-    moveTrolleyByN(DDOWNL, n, stepsPerRevolution * 2);
+    moveTrolleyByN(DDOWNL, n, STEPS * 2);
 }
 
 void moveTrolleyDiagUR(int n)
 {
-    moveTrolleyByN(DUPR, n, stepsPerRevolution * 2);
+    moveTrolleyByN(DUPR, n, STEPS * 2);
 }
 
 void moveTrolleyDiagDR(int n)
 {
-    moveTrolleyByN(DDOWNR, n, stepsPerRevolution * 2);
+    moveTrolleyByN(DDOWNR, n, STEPS * 2);
 }
 
 void moveKnight(int deltaX, int deltaY)
 {
     if (abs(deltaX) == 2 && abs(deltaY) == 1)
     {
-        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
-        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, abs(deltaX), stepsPerRevolution);
-        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, STEPS / 2);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, abs(deltaX), STEPS);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, 1, STEPS / 2);
     }
     else if (abs(deltaX) == 1 && abs(deltaY) == 2)
     {
-        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
-        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, abs(deltaY), stepsPerRevolution);
-        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, stepsPerRevolution / 2);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, STEPS / 2);
+        moveTrolleyByN((deltaY > 0) ? YUP : YDOWN, abs(deltaY), STEPS);
+        moveTrolleyByN((deltaX > 0) ? XRIGHT : XLEFT, 1, STEPS / 2);
     }
 }
 
@@ -221,6 +219,7 @@ void moveChessPiece(int currentX, int currentY, int startX, int startY, int endX
     calculateMovement(currentX, currentY, startX, startY);
 
     // Turn magnet on (pickup piece)
+    gpioDelay(100000);
     magnetOn();
 
     // int moveType = isLegalMove(startX, startY, endX, endY);
