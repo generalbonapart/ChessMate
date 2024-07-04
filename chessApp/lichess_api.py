@@ -21,6 +21,7 @@ game_id = None
 client = None
 move_accepted = threading.Event()
 move_legal = False
+game_state = None
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -64,16 +65,33 @@ def is_move_legal():
 # Function to get game moves
 def get_bot_move():
     last = None
-    for event in client.board.stream_game_state(game_id):
-        if 'state' in event:
-            moves = event['state']['moves']
+    # for event in client.board.stream_game_state(game_id):
+    #     #print(event)
+    #     if 'state' in event:
+    #         moves = event['state']['moves']
+    #         if moves:
+    #             last = moves.split()[-1]
+    #         return last
+    if game_state:
+        if 'moves' in game_state:
+            moves = game_state['moves']
             if moves:
                 last = moves.split()[-1]
-            return last
+    return last
+
+def get_time_left():
+    if game_state:
+        white_seconds = game_state['wtime']//1000
+        black_seconds = game_state['btime']//1000
+        return (white_seconds, black_seconds)
+    return None, None
 
 def add_user_move(move):
     global user_move
     user_move = move
+
+def is_game_active():
+    return game_not_over
 
 # Function to handle game state updates
 def handle_game_state_update(update):
@@ -109,18 +127,20 @@ def post_user_moves(stop_threads):
                 move_accepted.set()
                 user_move = None
                 break
-        time.sleep(3)
+        #time.sleep(3)
 
 def main_thread():
-    global client, game_not_over, game_status
+    global client, game_not_over, game_status, game_state
     while game_not_over:
         for update in client.board.stream_game_state(game_id):
+            if 'state' in update:
+                game_state = update['state']              
             game_status = handle_game_state_update(update)
             game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
             break
-        time.sleep(1)
+        #time.sleep(1)
 
-    time.sleep(3)
+    #time.sleep(3)
     print("Game Over!")
     game_not_over = True
     client = None

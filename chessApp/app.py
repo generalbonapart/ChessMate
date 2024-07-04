@@ -31,7 +31,7 @@ def handle_game_start(request):
     user_api_token = session.get('lichess_token')
     if user_api_token:
         
-        init_board_control()
+        init_board_control(params.time)
         # Launch lichess game via API
         launch_game(params, user_api_token)
         # Run the C binary
