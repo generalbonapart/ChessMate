@@ -5,3 +5,5 @@ requests>=2.31.0
 python-lichess>=0.10
 berserk>=0.13.2
 RPi.GPIO>=0.7.1
+smbus>1.0
+opencv-python>1.0
