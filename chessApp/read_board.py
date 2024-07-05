@@ -1,6 +1,6 @@
 import threading
 import socket
-import time
+from time import sleep
 import RPi_I2C_driver
 from chess_board import convert_move_to_board_notation
 from lichess_api import add_user_move, get_bot_move, is_game_active, game_status, move_accepted, is_move_legal, get_time_left
@@ -42,12 +42,12 @@ def lcd_thread(time):
         mylcd.lcd_display_string("    White      Black", 1)
         mylcd.lcd_display_string(f"    {white_time}      {black_time}", 3)
 
-        time.sleep(0.1)
+        sleep(0.1)
         mylcd.lcd_clear()
 
     mylcd.lcd_clear()
     mylcd.lcd_display_string_pos("Game Over", 2, 5)
-    time.sleep(2)
+    sleep(2)
     mylcd.lcd_clear()
     mylcd.backlight(0)
     GPIO.cleanup()
@@ -57,7 +57,7 @@ def main_thread():
     conn, addr = sock.accept()
     #with conn:
     print(f'Connected by {addr}')
-    time.sleep(1)
+    sleep(1)
     while is_game_active():
         # i = input("Press r when move is done, q to exit")
         # if i== 'q':
@@ -67,21 +67,21 @@ def main_thread():
         user_move = input("User move: ")
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
-            time.sleep(0.1)
-            
+            sleep(0.1)
+
         add_user_move(user_move)
         previous_move = user_move
         if user_move == 'q':
             conn.sendall(user_move.encode())
             break
-        #time.sleep(0.1)
+        #sleep(0.1)
         move_accepted.wait()
         move_accepted.clear()
 
         if is_move_legal():
             bot_move = None
             while(bot_move is None or bot_move == previous_move):
-                time.sleep(1)
+                sleep(1)
                 bot_move = get_bot_move()
                 
             previous_move = bot_move
