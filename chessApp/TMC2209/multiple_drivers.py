@@ -50,6 +50,18 @@ print("---\n---")
 
 
 #-----------------------------------------------------------------------
+# run the motors concurrently
+#-----------------------------------------------------------------------
+
+tmc1.run_to_position_steps_threaded(800, MovementAbsRel.RELATIVE)
+tmc2.run_to_position_steps_threaded(1200, MovementAbsRel.RELATIVE)
+
+tmc1.wait_for_movement_finished_threaded()
+tmc1.run_to_position_steps_threaded(-400, MovementAbsRel.RELATIVE)
+
+tmc1.wait_for_movement_finished_threaded()
+
+#-----------------------------------------------------------------------
 # deinitiate the TMC_2209 class
 #-----------------------------------------------------------------------
 tmc1.set_motor_enabled(False)
