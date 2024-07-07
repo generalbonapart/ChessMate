@@ -1,6 +1,6 @@
 import sys
 import time
-from TMC_2209_StepperDriver import *
+from src.TMC_2209_StepperDriver import *
 
 SPEED = int(sys.argv[1])
 THRESHOLD = int(sys.argv[2])

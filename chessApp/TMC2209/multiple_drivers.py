@@ -3,7 +3,7 @@ test file for testing multiple drivers via one UART connection
 """
 
 import time
-from TMC_2209_StepperDriver import *
+from src.TMC_2209_StepperDriver import *
 
 print("---")
 print("SCRIPT START")
