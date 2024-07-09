@@ -1,6 +1,18 @@
 import sys
 import time
 from src.TMC_2209_StepperDriver import *
+from RPi import GPIO
+
+# Pins assignment
+MAGNET_PIN = 18
+
+ENABLE0_PIN = 21
+STEP0_PIN = 16
+DIR0_PIN = 20
+
+ENABLE1_PIN = 26
+STEP1_PIN = 13
+DIR1_PIN = 19
 
 # Define variables for aDir, bDir, aPower, bPower
 aDir = 0
@@ -32,24 +44,34 @@ class Trolley:
             self.endX = endX
             self.endY = endY
 
-    def __init__(self, speed = 1000):
+    def __init__(self, free_speed = 1000, free_acceleration = 1000, loaded_speed = 500, loaded_acceleration = 300):
 
-        self.tmc1 = TMC_2209(21, 16, 20, driver_address=0)
-        self.tmc2 = TMC_2209(26, 13, 19, driver_address=1)
-        self.speed = speed
+        self.free_speed = free_speed
+        self.free_acceleration = free_acceleration
+        self.loaded_speed = loaded_speed
+        self.loaded_acceleration = loaded_acceleration
+        self.currentX = 0
+        self.currentY = 0
+
+        # Set up the 2 Core XY motors
+        self.tmc1 = TMC_2209(ENABLE0_PIN, STEP0_PIN, DIR0_PIN, driver_address=0)
+        self.tmc2 = TMC_2209(ENABLE1_PIN, STEP1_PIN, DIR1_PIN, driver_address=1)
+
         for tmc in [self.tmc1, self.tmc2]:
 
             tmc.tmc_logger.set_loglevel(Loglevel.DEBUG)
-
             tmc.set_direction_reg(False)
             tmc.set_current(300)
             tmc.set_interpolation(True)
             tmc.set_spreadcycle(False)
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
-            tmc.set_acceleration(1000)
-            tmc.set_max_speed(self.speed)
             tmc.set_motor_enabled(True)
+
+        # Pin Setup for ElectroMagnet
+        GPIO.setmode(GPIO.BCM)  
+        GPIO.setup(MAGNET_PIN, GPIO.OUT)  
+        self.magnet_OFF()
 
     def move_in_direction(self, inc, direction: str):
         
@@ -116,13 +138,47 @@ class Trolley:
 
         return self.Move(startX, startY, endX, endY)
 
+    def make_move(self, move_string):
+        move = self.chess_to_cartesian(move_string)
+
+        # Bring the trolley to the piece
+        free_move = self.Move(self.currentX, self.currentY, move.startX, move.startY)
+        self.set_speed_acceleration(loaded=False)
+        self.calculate_movement(free_move)
+
+        # Make a move with that piece
+        self.set_speed_acceleration(loaded=True)
+        self.magnet_ON()
+        self.calculate_movement(move)
+        self.magnet_OFF()
+
 
     def demo_test(self):
         # Prompt the user for a direction
         while(True):
             position = input("Enter move: ")
-            move = self.chess_to_cartesian(position)
-            self.calculate_movement(move)
+            # move = self.chess_to_cartesian(position)
+            # self.calculate_movement(move)
+            self.make_move(position)
+
+    def set_speed_acceleration(self, loaded):
+        for tmc in [self.tmc1, self.tmc2]:    
+            if loaded:        
+                tmc.set_acceleration(self.loaded_acceleration)
+                tmc.set_max_speed(self.loaded_speed)
+            else:
+                tmc.set_acceleration(self.free_acceleration)
+                tmc.set_max_speed(self.free_speed)
+
+    def magnet_ON(self):
+        GPIO.output(MAGNET_PIN, GPIO.HIGH)
+
+    def magnet_OFF(self):
+        GPIO.output(MAGNET_PIN, GPIO.LOW)
+
+    def __del__(self):
+        GPIO.cleanup()
+
 
 trolley = Trolley(1000)
 trolley.demo_test()
