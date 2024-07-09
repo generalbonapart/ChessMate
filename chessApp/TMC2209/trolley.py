@@ -91,7 +91,7 @@ class Trolley:
                 self.tmc2.run_to_position_steps_threaded(steps, MovementAbsRel.RELATIVE)
 
             self.tmc1.wait_for_movement_finished_threaded()
-            self.tmc2.wait_for_movement_finished_threaded()
+            #self.tmc2.wait_for_movement_finished_threaded()
 
     def calculate_movement(self, move: Move):
         # Calculate differences in x and y coordinates
@@ -152,6 +152,9 @@ class Trolley:
         self.magnet_ON()
         self.calculate_movement(move)
         self.magnet_OFF()
+
+        self.currentX = move.endX
+        self.currentY = move.endY
 
 
     def demo_test(self):
