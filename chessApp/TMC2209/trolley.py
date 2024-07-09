@@ -1,7 +1,7 @@
 import sys
 import time
 from src.TMC_2209_StepperDriver import *
-#from RPi import GPIO
+from RPi import GPIO
 
 # Pins assignment
 MAGNET_PIN = 18
@@ -54,8 +54,8 @@ class Trolley:
         self.currentY = 0
 
         # Pin Setup for ElectroMagnet
-        #GPIO.setmode(GPIO.BCM)  
-        #GPIO.setup(MAGNET_PIN, GPIO.OUT)  
+        GPIO.setmode(GPIO.BCM)  
+        GPIO.setup(MAGNET_PIN, GPIO.OUT)  
         self.magnet_OFF()
 
 
@@ -176,15 +176,15 @@ class Trolley:
 
     def magnet_ON(self):
         pass
-        #GPIO.output(MAGNET_PIN, GPIO.HIGH)
+        GPIO.output(MAGNET_PIN, GPIO.HIGH)
 
     def magnet_OFF(self):
         pass
-        #GPIO.output(MAGNET_PIN, GPIO.LOW)
+        GPIO.output(MAGNET_PIN, GPIO.LOW)
 
     def __del__(self):
         pass
-        #GPIO.cleanup()
+        GPIO.cleanup()
 
 
 trolley = Trolley()
