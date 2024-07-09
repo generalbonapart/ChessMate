@@ -53,6 +53,12 @@ class Trolley:
         self.currentX = 0
         self.currentY = 0
 
+        # Pin Setup for ElectroMagnet
+        GPIO.setmode(GPIO.BCM)  
+        GPIO.setup(MAGNET_PIN, GPIO.OUT)  
+        self.magnet_OFF()
+
+
         # Set up the 2 Core XY motors
         self.tmc1 = TMC_2209(ENABLE0_PIN, STEP0_PIN, DIR0_PIN, driver_address=0)
         self.tmc2 = TMC_2209(ENABLE1_PIN, STEP1_PIN, DIR1_PIN, driver_address=1)
@@ -67,11 +73,6 @@ class Trolley:
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
             tmc.set_motor_enabled(True)
-
-        # Pin Setup for ElectroMagnet
-        GPIO.setmode(GPIO.BCM)  
-        GPIO.setup(MAGNET_PIN, GPIO.OUT)  
-        self.magnet_OFF()
 
     def move_in_direction(self, inc, direction: str):
         
@@ -180,7 +181,7 @@ class Trolley:
         GPIO.cleanup()
 
 
-trolley = Trolley(1000)
+trolley = Trolley()
 trolley.demo_test()
 
 
