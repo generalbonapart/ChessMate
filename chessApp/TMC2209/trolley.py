@@ -27,10 +27,10 @@ class Trolley:
 
     # Motor control settings [aDir, bDir, aPower, bPower]
     MOTOR_DIREC = {
-        "XRIGHT": [1, 1, 1, 1],
-        "XLEFT": [-1, -1, 1, 1],
-        "YUP": [1, -1, 1, 1],
-        "YDOWN": [-1, 1, 1, 1],
+        "XRIGHT": [-1, 1, 1, 1],
+        "XLEFT": [1, -1, 1, 1],
+        "YUP": [-1, -1, 1, 1],
+        "YDOWN": [1, 1, 1, 1],
         "DDOWNL": [-1, -1, 1, 0],
         "DDOWNR": [-1, 1, 0, 1],
         "DUPL": [-1, -1, 0, 1],
