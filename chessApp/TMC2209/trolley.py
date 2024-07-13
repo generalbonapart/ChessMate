@@ -187,6 +187,7 @@ class Trolley:
         GPIO.cleanup()
 
 
+
 trolley = Trolley()
 trolley.demo_test()
 

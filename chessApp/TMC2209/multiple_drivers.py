@@ -1,9 +1,12 @@
 """
 test file for testing multiple drivers via one UART connection
 """
-
+import sys
 import time
 from src.TMC_2209_StepperDriver import *
+
+
+SPEED = int(sys.argv[1])
 
 print("---")
 print("SCRIPT START")
@@ -39,7 +42,8 @@ for tmc in [tmc1, tmc2]:
     tmc.set_microstepping_resolution(2)
     tmc.set_internal_rsense(False)
     tmc.set_motor_enabled(True)
-
+    tmc.set_acceleration(1000)
+    tmc.set_max_speed(SPEED)
 #-----------------------------------------------------------------------
 # these functions read and print the current settings in the TMC register
 #-----------------------------------------------------------------------
