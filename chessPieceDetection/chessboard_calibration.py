@@ -8,6 +8,8 @@ IMAGE = 'images/board.jpg'
 CURDIR = os.getcwd()
 OUTPUT_FILE = os.path.join(CURDIR, IMAGE)
 
+squares_global = []
+
 def angle_between_lines(line1, line2):
     # Calculate the smallest angle between two lines.
     rho1, theta1 = line1
@@ -121,6 +123,8 @@ def get_chessboard():
     return cv2.warpPerspective(img,M,(800,800))
 
 def chess_square_detection(chessboard_image):
+    global squares_global
+
     # Convert to grayscale and apply blur
     gray = cv2.cvtColor(chessboard_image, cv2.COLOR_BGR2GRAY)
     img_blur = cv2.blur(gray, (3, 3))
@@ -162,4 +166,4 @@ def chess_square_detection(chessboard_image):
     print(f"Number of lines: {len(lines):.2f}")
     print(f"Number of merged_lines: {len(merged_lines):.2f}")
 
-    return find_squares(sorted_points, 9, 9)
+    squares_global = find_squares(sorted_points, 9, 9)
