@@ -74,6 +74,8 @@ class Trolley:
             tmc.set_internal_rsense(False)
             tmc.set_motor_enabled(True)
 
+        self.move_to_chess_origin()
+
     def move_to_chess_origin(self):
         
         # Find the physical origin
