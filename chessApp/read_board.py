@@ -53,7 +53,7 @@ def lcd_thread(time):
     GPIO.cleanup()
 
 def main_thread():
-    global previous_move
+    global previous_move, trolley
     sleep(1)
     while is_game_active():
         # i = input("Press r when move is done, q to exit")
@@ -87,6 +87,8 @@ def main_thread():
         else:
             print(f"Illegal move {user_move}")
 
+    trolley = None
+
 def init_trolley():
     global trolley
     trolley = Trolley()
@@ -99,8 +101,6 @@ def init_board_control(time):
     thread1.start()
     thread2.start()
     board_detection_init()
-    thread1.join()
-    trolley = None
 
 
 if __name__ == "__main__":
