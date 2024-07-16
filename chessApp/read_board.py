@@ -99,6 +99,9 @@ def init_board_control(time):
     thread1.start()
     thread2.start()
     board_detection_init()
+    thread1.join()
+    trolley = None
+
 
 if __name__ == "__main__":
     init_board_control()
