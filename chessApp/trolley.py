@@ -52,7 +52,7 @@ class Trolley:
         self.loaded_acceleration = loaded_acceleration
         self.currentX = 0
         self.currentY = 0
-        self.stallguard_threshold = 200
+        self.stallguard_threshold = 250
 
         # Pin Setup for ElectroMagnet
         GPIO.setmode(GPIO.BCM)  
@@ -80,7 +80,7 @@ class Trolley:
         
         # Find the physical origin
         self.set_speed_acceleration(loaded=True)
-        self.tmc1.take_me_home(speed=self.loaded_speed, threshold=self.stallguard_threshold)
+        self.tmc1.take_me_home(speed=self.free_speed, threshold=self.stallguard_threshold)
 
         # Move to chess origin
         self.move_in_direction(0.5, "XRIGHT")
