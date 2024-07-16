@@ -1,6 +1,6 @@
 import sys
 import time
-from src.TMC_2209_StepperDriver import *
+from TMC2209.src.TMC_2209_StepperDriver import *
 from RPi import GPIO
 
 # Pins assignment

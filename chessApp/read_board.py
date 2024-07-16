@@ -6,7 +6,7 @@ from chess_board import convert_move_to_board_notation
 from lichess_api import add_user_move, get_bot_move, is_game_active, game_status, move_accepted, is_move_legal, get_time_left
 from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
-from TMC2209.trolley import *
+from trolley import *
 
 HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
