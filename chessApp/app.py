@@ -18,10 +18,9 @@ app.config['LICHESS_ACCESS_TOKEN_URL'] = f"{LICHESS_HOST}/api/token"
 
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
-process = None
 
 def handle_game_start(request):
-    global process
+
     params = GameParams()
     params.side = request.form['color']
     params.time = int(request.form['time_limit']) * 60 # time in seconds
@@ -30,14 +29,10 @@ def handle_game_start(request):
     
     user_api_token = session.get('lichess_token')
     if user_api_token:
-        
         init_board_control(params.time)
         # Launch lichess game via API
         launch_game(params, user_api_token)
-        # Run the C binary
-        # with open("trolley_log.txt", 'w') as log:
-        process = subprocess.Popen(['./build/trolley'], text=True)
-        process.wait()
+    
         
 @app.route('/login', methods=['GET', 'POST'])
 def login():

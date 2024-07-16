@@ -20,8 +20,8 @@ bDir = 1
 aPower = 2
 bPower = 3
 
-SQUARE_STEP = 515
-DIAG_STEP = 727
+SQUARE_STEP = 510
+DIAG_STEP = 1020
 
 class Trolley:
 
@@ -52,12 +52,12 @@ class Trolley:
         self.loaded_acceleration = loaded_acceleration
         self.currentX = 0
         self.currentY = 0
+        self.stallguard_threshold = 200
 
         # Pin Setup for ElectroMagnet
         GPIO.setmode(GPIO.BCM)  
         GPIO.setup(MAGNET_PIN, GPIO.OUT)  
         self.magnet_OFF()
-
 
         # Set up the 2 Core XY motors
         self.tmc1 = TMC_2209(ENABLE0_PIN, STEP0_PIN, DIR0_PIN, driver_address=0)
@@ -73,6 +73,15 @@ class Trolley:
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
             tmc.set_motor_enabled(True)
+
+    def move_to_chess_origin(self):
+        
+        # Find the physical origin
+        self.set_speed_acceleration(loaded=True)
+        self.tmc1.take_me_home(speed=self.loaded_speed, threshold=self.stallguard_threshold)
+
+        # Move to chess origin
+        self.move_in_direction(0.5, "XRIGHT")
 
     def move_in_direction(self, inc, direction: str):
         
@@ -93,14 +102,28 @@ class Trolley:
             self.tmc1.wait_for_movement_finished_threaded()
             #self.tmc2.wait_for_movement_finished_threaded()
 
+    def move_knight(self, delta_x, delta_y):
+        if abs(delta_x) == 2 and abs(delta_y) == 1:
+            self.move_in_direction(0.5, 'YUP' if delta_y > 0 else 'YDOWN')
+            self.move_in_direction(2, 'XRIGHT' if delta_x > 0 else 'XLEFT')
+            self.move_in_direction(0.5, 'YUP' if delta_y > 0 else 'YDOWN')
+        elif abs(delta_x) == 1 and abs(delta_y) == 2:
+            self.move_in_direction(0.5, 'XRIGHT' if delta_x > 0 else 'XLEFT')
+            self.move_in_direction(2, 'YUP' if delta_y > 0 else 'YDOWN')
+            self.move_in_direction(0.5, 'XRIGHT' if delta_x > 0 else 'XLEFT')
+
+    def is_knight_move(self, delta_x, delta_y):
+        return (abs(delta_x) == 2 and abs(delta_y) == 1) or (abs(delta_x) == 1 and abs(delta_y) == 2)
+
     def calculate_movement(self, move: Move):
         # Calculate differences in x and y coordinates
         delta_x = move.endX - move.startX
         delta_y = move.endY - move.startY
 
         print(f"DeltaX: {delta_x}, DeltaY: {delta_y}")
-
-        if delta_x == delta_y:
+        if self.is_knight_move(delta_x, delta_y):
+            self.move_knight(delta_x, delta_y)
+        elif delta_x == delta_y:
             if delta_x > 0:
                 self.move_in_direction(delta_x, "DUPR")
             else:
@@ -151,6 +174,7 @@ class Trolley:
         self.set_speed_acceleration(loaded=True)
         self.magnet_ON()
         self.calculate_movement(move)
+        time.sleep(1)
         self.magnet_OFF()
 
         self.currentX = move.endX
@@ -175,21 +199,13 @@ class Trolley:
                 tmc.set_max_speed(self.free_speed)
 
     def magnet_ON(self):
-        pass
         GPIO.output(MAGNET_PIN, GPIO.HIGH)
 
     def magnet_OFF(self):
-        pass
         GPIO.output(MAGNET_PIN, GPIO.LOW)
 
     def __del__(self):
-        pass
-        GPIO.cleanup()
-
-
-
-trolley = Trolley()
-trolley.demo_test()
+        GPIO.cleanup(MAGNET_PIN)
 
 
 

@@ -1,17 +1,17 @@
 import threading
-import socket
 from time import sleep
 import RPi_I2C_driver
+from RPi import GPIO
 from chess_board import convert_move_to_board_notation
 from lichess_api import add_user_move, get_bot_move, is_game_active, game_status, move_accepted, is_move_legal, get_time_left
 from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
-import RPi.GPIO as GPIO
+from TMC2209.trolley import *
 
 HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
-sock = None
 previous_move = "a8a8"
+trolley = None
 
 def convert_seconds_to_min_sec(seconds: int):
     # Calculate minutes and remaining seconds
@@ -54,9 +54,6 @@ def lcd_thread(time):
 
 def main_thread():
     global previous_move
-    conn, addr = sock.accept()
-    #with conn:
-    print(f'Connected by {addr}')
     sleep(1)
     while is_game_active():
         # i = input("Press r when move is done, q to exit")
@@ -66,13 +63,12 @@ def main_thread():
         #     user_move = get_user_move()
         user_move = input("User move: ")
         # Read the button status
-        while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
-            sleep(0.1)
+        #while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
+            #sleep(0.1)
 
         add_user_move(user_move)
         previous_move = user_move
         if user_move == 'q':
-            conn.sendall(user_move.encode())
             break
         #sleep(0.1)
         move_accepted.wait()
@@ -87,21 +83,17 @@ def main_thread():
             previous_move = bot_move
             print("Bot's move: ", bot_move)
             #report_bot_move(bot_move)
-            conn.sendall(bot_move.encode())
-            # Block until the trolley has done its job
-            ack = conn.recv(1024).decode('utf-8')
-            print(ack)
+            trolley.make_move(bot_move)
         else:
             print(f"Illegal move {user_move}")
 
-    sock.close()
-
-
+def init_trolley():
+    global trolley
+    trolley = Trolley()
+    
 def init_board_control(time):
-    global sock
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((HOST, PORT))
-    sock.listen()
+    
+    init_trolley()
     thread1 = threading.Thread(target=main_thread)
     thread2 = threading.Thread(target=lcd_thread, args=(time, ))
     thread1.start()

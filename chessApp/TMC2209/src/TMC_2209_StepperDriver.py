@@ -191,7 +191,6 @@ class TMC_2209:
         self._deinit_finished = True
 
 
-
     def set_motor_enabled(self, en):
         """enables or disables the motor current output
 
@@ -293,13 +292,13 @@ class TMC_2209:
         elif direction == Direction.CW:
             steps = MAX_STEPS_ALLOWED
         self.run_to_position_steps_threaded(steps, MovementAbsRel.RELATIVE)
-        print("Position: ", self.get_current_position())
+        #print("Position: ", self.get_current_position())
         while self.get_movement_phase() != MovementPhase.STANDSTILL:
             stallguard_result = self.get_stallguard_result()
 
             if (self.get_movement_phase() == MovementPhase.MAXSPEED and
                 stallguard_result < threshold):
-                print("Position: ", self.get_current_position())
+                #print("Position: ", self.get_current_position())
                 self.stop()
                 break
 
