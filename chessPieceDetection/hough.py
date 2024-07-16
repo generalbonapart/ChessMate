@@ -93,7 +93,7 @@ def find_squares(points, row_count, col_count):
     return squares
 
 # Load the image
-image = cv2.imread('images/tilted_chessboard.jpg')
+image = cv2.imread('images/board.jpg')
 
 scale_percent = 20 # percent of original size
 width = int(image.shape[1] * scale_percent / 100)
@@ -103,17 +103,19 @@ dim = (width, height)
 # resize image
 img = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
-pts1 = np.float32([[160,96],[530,200],[158,666],[527,572]])
-pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+pts1 = np.float32([[318, 140],[608, 147],[150, 425],[776, 430]])
+pts2 = np.float32([[0,0],[1000,0],[0,1000],[1000,1000]])
 M = cv2.getPerspectiveTransform(pts1,pts2)
-dst = cv2.warpPerspective(img,M,(800,800))
+dst = cv2.warpPerspective(img,M,(1000,1000))
 
 # Convert to grayscale and apply blur
 gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-img_blur = cv2.blur(gray, (3, 3))
+gray = cv2.equalizeHist(gray)
+
+img_blur = cv2.GaussianBlur(gray, (7, 7), 0)
 
 # Apply Canny edge detector
-edges = cv2.Canny(img_blur, 50, 150, apertureSize=3)
+edges = cv2.Canny(img_blur, 30, 60, apertureSize=3)
 
 # Applying standard Hough Line Transform
 lines = cv2.HoughLines(edges, 1, np.pi / 180, 150)
@@ -144,7 +146,13 @@ merged_lines = merged_horizontal_lines + merged_vertical_lines
 intersection_points = get_intersection_points(merged_horizontal_lines, merged_vertical_lines)
 sorted_points = sort_points(intersection_points)
 
-squares = find_squares(sorted_points, 9, 9)
+print(f"Number of horizontal lines: {len(horizontal_lines):.2f}")
+print(f"Number of vertical lines: {len(vertical_lines):.2f}")
+print(f"Number of lines: {len(lines):.2f}")
+print(f"Number of merged_lines: {len(merged_lines):.2f}")
+print(f"Number of sorted points: {len(sorted_points):.2f}")
+
+squares = find_squares(sorted_points, 1, 1)
 
 for square in squares:
     top_left, top_right, bottom_left, bottom_right = square
@@ -175,16 +183,13 @@ for idx, square in enumerate(squares):
     color = (0, 255, 0) if occupied else (0, 0, 255)
     cv2.rectangle(dst, top_left, bottom_right, color, thickness=2)
 
-print(f"Number of horizontal lines: {len(horizontal_lines):.2f}")
-print(f"Number of vertical lines: {len(vertical_lines):.2f}")
-print(f"Number of lines: {len(lines):.2f}")
-print(f"Number of merged_lines: {len(merged_lines):.2f}")
 
 # Draw the merged lines on the image
 # draw_lines(dst, merged_lines)
 
 # Displaying the Image
 cv2.imshow('Original Image', img)
+cv2.imshow('Gray Scale', gray)
 cv2.imshow('Transformed Image', dst)
 cv2.imshow('Edges', edges)
 cv2.waitKey(0)

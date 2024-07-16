@@ -100,28 +100,6 @@ def find_squares(points, row_count, col_count):
             squares.append((top_left, top_right, bottom_left, bottom_right))
     return squares
 
-def get_chessboard():
-    command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
-    try:
-        subprocess.call(command)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    # Load the image
-    image_raw = cv2.imread(IMAGE)
-    assert image_raw is not None, "Image not found"
-
-    scale_percent = 20 # percent of original size
-    width = int(image_raw.shape[1] * scale_percent / 100)
-    height = int(image_raw.shape[0] * scale_percent / 100)
-    dim = (width, height)
-
-     # resize image
-    img = cv2.resize(image_raw, dim, interpolation = cv2.INTER_AREA)
-    pts1 = np.float32([[160,96],[530,200],[158,666],[527,572]])
-    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    M = cv2.getPerspectiveTransform(pts1,pts2)
-    return cv2.warpPerspective(img,M,(800,800))
-
 def chess_square_detection(chessboard_image):
     global squares_global
 
@@ -130,7 +108,7 @@ def chess_square_detection(chessboard_image):
     img_blur = cv2.blur(gray, (3, 3))
 
     # Apply Canny edge detector
-    edges = cv2.Canny(img_blur, 50, 150, apertureSize=3)
+    edges = cv2.Canny(img_blur, 30, 150, apertureSize=3)
 
     # Applying standard Hough Line Transform
     lines = cv2.HoughLines(edges, 1, np.pi / 180, 150)
@@ -161,9 +139,68 @@ def chess_square_detection(chessboard_image):
     intersection_points = get_intersection_points(merged_horizontal_lines, merged_vertical_lines)
     sorted_points = sort_points(intersection_points)
 
+    cv2.imshow('Edges', edges)
+
     print(f"Number of horizontal lines: {len(horizontal_lines):.2f}")
     print(f"Number of vertical lines: {len(vertical_lines):.2f}")
     print(f"Number of lines: {len(lines):.2f}")
     print(f"Number of merged_lines: {len(merged_lines):.2f}")
 
-    squares_global = find_squares(sorted_points, 9, 9)
+    # squares_global = find_squares(sorted_points, 9, 9)
+
+def draw_squares(image, squares):
+    for idx, square in enumerate(squares):
+        # Extract corners of the square
+        top_left, top_right, bottom_left, bottom_right = square
+
+        # Create a mask for the square
+        mask = np.zeros_like(dst)
+        roi_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
+        cv2.fillPoly(mask, [roi_corners], (255, 255, 255))
+
+        # Apply the mask to the original image
+        square_image = cv2.bitwise_and(dst, mask)
+
+        mean_intensity = np.mean(square_image)
+        # Determine if the square is occupied based on mean intensity threshold
+        occupied = mean_intensity > 5  # Adjust threshold as needed
+
+        # Draw rectangle on the original image based on occupancy
+        color = (0, 255, 0) if occupied else (0, 0, 255)
+        cv2.rectangle(image, top_left, bottom_right, color, thickness=2)
+
+def get_chessboard():
+    command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
+    try:
+        subprocess.call(command)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    # Load the image
+    image_raw = cv2.imread(IMAGE)
+    assert image_raw is not None, "Image not found"
+
+    scale_percent = 20 # percent of original size
+    width = int(image_raw.shape[1] * scale_percent / 100)
+    height = int(image_raw.shape[0] * scale_percent / 100)
+    dim = (width, height)
+
+     # resize image
+    img = cv2.resize(image_raw, dim, interpolation = cv2.INTER_AREA)
+    pts1 = np.float32([[320, 147],[607, 153],[150, 426],[773, 429]])
+    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+
+    cv2.imshow('Original', img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    return cv2.warpPerspective(img,M,(800,800))
+
+if __name__ == '__main__':
+    
+    image = get_chessboard()
+    chess_square_detection(image)
+    
+    cv2.imshow('Image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
