@@ -103,43 +103,38 @@ dim = (width, height)
 # resize image
 img = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
-pts1 = np.float32([[318, 140],[608, 147],[150, 425],[776, 430]])
+# pts1 = np.float32([[318, 140],[608, 147],[150, 425],[776, 430]])
 # pts1 = np.float32([[262,151],[652,157],[38,441],[866,450]])
-# pts1 = np.float32([[279,130],[636,138],[8,517],[894,516]])
-pts2 = np.float32([[0,0],[1000,0],[0,1000],[1000,1000]])
+pts1 = np.float32([[279,130],[636,138],[8,517],[894,516]])
+pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
 M = cv2.getPerspectiveTransform(pts1,pts2)
-resized_img = cv2.warpPerspective(img,M,(1000,1000))
+resized_img = cv2.warpPerspective(img,M,(800,800))
 
 # Convert to grayscale and apply blur
 gray = cv2.cvtColor(resized_img, cv2.COLOR_BGR2GRAY)
-
 blurred_image = cv2.GaussianBlur(gray, (5, 5), 0)
 
-kernel = np.ones((5, 5), np.uint8)
-closed_image = cv2.morphologyEx(blurred_image, cv2.MORPH_CLOSE, kernel)
+# Adjust contrast and brightness
+alpha = 0.5  # Simple contrast control [1.0-3.0]
+beta = -50   # Simple brightness control [0-100]
 
-binary_image = cv2.adaptiveThreshold(closed_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+adjusted = cv2.convertScaleAbs(gray, alpha=alpha, beta=beta)
 
-# _, thresholded = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
+_, mask = cv2.threshold(blurred_image, 220, 255, cv2.THRESH_BINARY)
 
-# # Example: Morphological operations
-# kernel = np.ones((5, 5), np.uint8)
-# mask = cv2.dilate(thresholded, kernel, iterations=1)
+resized_img[mask == 255] = [0, 0, 0]
 
-# mask = np.uint8(mask)
+inpainted_image = cv2.inpaint(resized_img, mask, 3, cv2.INPAINT_TELEA)
 
-# result = cv2.bitwise_and(resized_img, resized_img, mask=~mask)
-
-# cv2.imshow("MASK", mask)
-# cv2.imshow('Glare Removed', result)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+cv2.imshow('Img', resized_img)
+cv2.imshow('Mask', mask)
+# cv2.imshow('Inpainted Image', inpainted_image)
 
 # Apply Canny edge detector
-edges = cv2.Canny(binary_image, 200, 600, apertureSize=3)
+edges = cv2.Canny(adjusted, 20, 40, apertureSize=3)
 
 # Applying standard Hough Line Transform
-lines = cv2.HoughLines(binary_image, 1, np.pi / 180, 300)
+lines = cv2.HoughLines(edges, 1, np.pi / 180, 300)
 
 # Separate lines into horizontal and vertical
 horizontal_lines = []
@@ -206,14 +201,8 @@ for idx, square in enumerate(squares):
 
 
 # Draw the merged lines on the image
-# draw_lines(resized_img, merged_lines)
+draw_lines(resized_img, merged_lines)
 
 # Displaying the Image
-
-cv2.imshow('Original Image', img)
-cv2.imshow('Gray Scale', gray)
-cv2.imshow('Transformed Image', resized_img)
-cv2.imshow('Binary Image', binary_image)
-cv2.imshow('Edges', edges)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
