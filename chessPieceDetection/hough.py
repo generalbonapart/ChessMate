@@ -93,7 +93,7 @@ def find_squares(points, row_count, col_count):
     return squares
 
 # Load the image
-image = cv2.imread('images/board.jpg')
+image = cv2.imread('images/empty_board.jpg')
 
 scale_percent = 20 # percent of original size
 width = int(image.shape[1] * scale_percent / 100)
@@ -104,21 +104,42 @@ dim = (width, height)
 img = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
 pts1 = np.float32([[318, 140],[608, 147],[150, 425],[776, 430]])
+# pts1 = np.float32([[262,151],[652,157],[38,441],[866,450]])
+# pts1 = np.float32([[279,130],[636,138],[8,517],[894,516]])
 pts2 = np.float32([[0,0],[1000,0],[0,1000],[1000,1000]])
 M = cv2.getPerspectiveTransform(pts1,pts2)
-dst = cv2.warpPerspective(img,M,(1000,1000))
+resized_img = cv2.warpPerspective(img,M,(1000,1000))
 
 # Convert to grayscale and apply blur
-gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-gray = cv2.equalizeHist(gray)
+gray = cv2.cvtColor(resized_img, cv2.COLOR_BGR2GRAY)
 
-img_blur = cv2.GaussianBlur(gray, (7, 7), 0)
+blurred_image = cv2.GaussianBlur(gray, (5, 5), 0)
+
+kernel = np.ones((5, 5), np.uint8)
+closed_image = cv2.morphologyEx(blurred_image, cv2.MORPH_CLOSE, kernel)
+
+binary_image = cv2.adaptiveThreshold(closed_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+# _, thresholded = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
+
+# # Example: Morphological operations
+# kernel = np.ones((5, 5), np.uint8)
+# mask = cv2.dilate(thresholded, kernel, iterations=1)
+
+# mask = np.uint8(mask)
+
+# result = cv2.bitwise_and(resized_img, resized_img, mask=~mask)
+
+# cv2.imshow("MASK", mask)
+# cv2.imshow('Glare Removed', result)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 # Apply Canny edge detector
-edges = cv2.Canny(img_blur, 30, 60, apertureSize=3)
+edges = cv2.Canny(binary_image, 200, 600, apertureSize=3)
 
 # Applying standard Hough Line Transform
-lines = cv2.HoughLines(edges, 1, np.pi / 180, 150)
+lines = cv2.HoughLines(binary_image, 1, np.pi / 180, 300)
 
 # Separate lines into horizontal and vertical
 horizontal_lines = []
@@ -157,23 +178,23 @@ squares = find_squares(sorted_points, 1, 1)
 for square in squares:
     top_left, top_right, bottom_left, bottom_right = square
     # You can now process each square. For example:
-    cv2.rectangle(dst, top_left, bottom_right, (255, 0, 0), 4)
+    cv2.rectangle(resized_img, top_left, bottom_right, (255, 0, 0), 4)
 
 # Draw intersection points on the original image
 for point in sorted_points:
-    cv2.circle(dst, point, 5, (0, 255, 0), -1)
+    cv2.circle(resized_img, point, 5, (0, 255, 0), -1)
 
 for idx, square in enumerate(squares):
     # Extract corners of the square
     top_left, top_right, bottom_left, bottom_right = square
 
     # Create a mask for the square
-    mask = np.zeros_like(dst)
+    mask = np.zeros_like(resized_img)
     roi_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
     cv2.fillPoly(mask, [roi_corners], (255, 255, 255))
 
     # Apply the mask to the original image
-    square_image = cv2.bitwise_and(dst, mask)
+    square_image = cv2.bitwise_and(resized_img, mask)
 
     mean_intensity = np.mean(square_image)
     # Determine if the square is occupied based on mean intensity threshold
@@ -181,16 +202,18 @@ for idx, square in enumerate(squares):
     
     # Draw rectangle on the original image based on occupancy
     color = (0, 255, 0) if occupied else (0, 0, 255)
-    cv2.rectangle(dst, top_left, bottom_right, color, thickness=2)
+    cv2.rectangle(resized_img, top_left, bottom_right, color, thickness=2)
 
 
 # Draw the merged lines on the image
-# draw_lines(dst, merged_lines)
+# draw_lines(resized_img, merged_lines)
 
 # Displaying the Image
+
 cv2.imshow('Original Image', img)
 cv2.imshow('Gray Scale', gray)
-cv2.imshow('Transformed Image', dst)
+cv2.imshow('Transformed Image', resized_img)
+cv2.imshow('Binary Image', binary_image)
 cv2.imshow('Edges', edges)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
