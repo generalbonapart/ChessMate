@@ -12,6 +12,7 @@ HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
 previous_move = "a8a8"
 trolley = None
+mylcd = None
 
 def convert_seconds_to_min_sec(seconds: int):
     # Calculate minutes and remaining seconds
@@ -20,10 +21,15 @@ def convert_seconds_to_min_sec(seconds: int):
     return f"{minutes}:{sec:02}"
 
 
+def lcd_init(lcd_secret):
+    global mylcd
+    mylcd = RPi_I2C_driver.lcd()
+    mylcd.lcd_display_string(" Enter a secret key: ", 1)
+    mylcd.lcd_display_string(f"    {lcd_secret}  ", 3)
+
 def lcd_thread(time):
 
     print(time)
-    mylcd = RPi_I2C_driver.lcd()
     # Set the GPIO mode
     GPIO.setmode(GPIO.BCM)
     # Set up the button pin as an input with a pull-up resistor

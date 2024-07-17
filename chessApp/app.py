@@ -3,9 +3,16 @@ import subprocess
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+import secrets
+import string
 from lichess_api import launch_game
-from read_board import init_board_control
+from read_board import init_board_control, lcd_init
 from models import GameParams
+
+
+def generate_random_string(length=8):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
 load_dotenv()
@@ -15,7 +22,7 @@ app.secret_key = os.getenv('SECRET_KEY')
 app.config['LICHESS_CLIENT_ID'] =  os.getenv("LICHESS_CLIENT_ID")
 app.config['LICHESS_AUTHORIZE_URL'] = f"{LICHESS_HOST}/oauth"
 app.config['LICHESS_ACCESS_TOKEN_URL'] = f"{LICHESS_HOST}/api/token"
-
+lcd_secret = None
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
 
@@ -44,8 +51,27 @@ def login():
         return oauth.lichess.authorize_redirect(redirect_uri, scope=scopes)
     return render_template('login.html') 
 
+@app.route('/auth', methods=['GET', 'POST'])
+def auth():
+    error = None
+    if request.method == 'POST':
+        entered_string = request.form['auth_string']
+        if entered_string == lcd_secret:
+            session['led_token'] = lcd_secret
+            return redirect(url_for('index'))
+        else:
+            error = "Incorrect string. Please try again."
+    return render_template('auth.html', error=error)
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global lcd_secret
+
+    if 'led_token' not in session:
+        lcd_secret = generate_random_string()
+        print(lcd_secret)
+        #lcd_init(lcd_secret)
+        return redirect(url_for('auth'))
     if 'lichess_token' not in session:
         return redirect(url_for('login'))
 
