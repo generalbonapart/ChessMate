@@ -43,7 +43,6 @@ def lcd_thread(time):
         mylcd.lcd_display_string(f"    {white_time}      {black_time}", 3)
 
         sleep(0.1)
-        mylcd.lcd_clear()
 
     mylcd.lcd_clear()
     mylcd.lcd_display_string_pos("Game Over", 2, 5)

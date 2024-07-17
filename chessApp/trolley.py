@@ -72,15 +72,19 @@ class Trolley:
             tmc.set_spreadcycle(False)
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
-            tmc.set_motor_enabled(True)
 
+        self.tmc1.set_motor_enabled(True)
         self.move_to_chess_origin()
+        self.tmc2.set_motor_enabled(True)
 
     def move_to_chess_origin(self):
         
+        self.tmc1.set_acceleration(self.free_acceleration)
+        self.tmc1.set_max_speed(self.free_speed)
+        self.move_in_direction(0.5, "DUPR")
+        
         # Find the physical origin
-        self.set_speed_acceleration(loaded=True)
-        self.tmc1.take_me_home(speed=self.free_speed, threshold=self.stallguard_threshold)
+        self.tmc1.take_me_home(threshold=self.stallguard_threshold)
 
         # Move to chess origin
         self.move_in_direction(0.5, "XRIGHT")

@@ -282,10 +282,9 @@ class TMC_2209:
             return
         self._sg_callback()
 
-    def take_me_home(self, speed, threshold, direction: int = Direction.CCW):
+    def take_me_home(self, threshold, direction: int = Direction.CCW):
 
-        self.tmc_logger.log(f"Testing homing with speed = {speed}, threshold = {threshold}", Loglevel.INFO)
-        self.set_max_speed(speed)
+        self.tmc_logger.log(f"Testing homing with threshold = {threshold}", Loglevel.INFO)
         self.set_spreadcycle(0)
         if direction == Direction.CCW:
             steps = MAX_STEPS_ALLOWED * (-1)
