@@ -11,7 +11,7 @@ from models import GameParams
 
 
 def generate_random_string(length=8):
-    characters = string.ascii_letters + string.digits + string.punctuation
+    characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
 
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
