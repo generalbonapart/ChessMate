@@ -1,18 +1,20 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authentication Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h2>Please enter the special string to authenticate:</h2>
-    <form method="post">
-        <input type="text" name="auth_string">
-        <input type="submit" value="Submit">
-    </form>
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
+    <div class="container">
+        <h1>Authentication Page</h1>
+        <form method="post">
+            <label for="auth_string">Please enter the special string to authenticate:</label>
+            <input type="text" id="auth_string" name="auth_string" required>
+            <button type="submit">Submit</button>
+            {% if error %}
+            <p style="color: red;">{{ error }}</p>
+            {% endif %}
+        </form>
+    </div>
 </body>
 </html>
