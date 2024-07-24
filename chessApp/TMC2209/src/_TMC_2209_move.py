@@ -275,7 +275,7 @@ def wait_for_movement_finished_threaded(self):
     Returns:
         enum: how the movement was finished
     """
-    if self._movement_thread.is_alive():
+    if self._movement_thread:
         self._movement_thread.join()
     return self._stop
 
