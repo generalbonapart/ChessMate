@@ -60,8 +60,8 @@ class Trolley:
         self.magnet_OFF()
 
         # Set up the 2 Core XY motors
-        self.tmc1 = TMC_2209(ENABLE0_PIN, STEP0_PIN, DIR0_PIN, driver_address=0)
-        self.tmc2 = TMC_2209(ENABLE1_PIN, STEP1_PIN, DIR1_PIN, driver_address=1)
+        self.tmc2 = TMC_2209(ENABLE0_PIN, STEP0_PIN, DIR0_PIN, driver_address=0)
+        self.tmc1 = TMC_2209(ENABLE1_PIN, STEP1_PIN, DIR1_PIN, driver_address=1)
 
         for tmc in [self.tmc1, self.tmc2]:
 

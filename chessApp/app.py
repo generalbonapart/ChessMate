@@ -70,7 +70,7 @@ def index():
     if 'led_token' not in session:
         lcd_secret = generate_random_string()
         print(lcd_secret)
-        #lcd_init(lcd_secret)
+        lcd_init(lcd_secret)
         return redirect(url_for('auth'))
     if 'lichess_token' not in session:
         return redirect(url_for('login'))
