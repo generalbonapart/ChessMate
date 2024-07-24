@@ -52,8 +52,8 @@ class Trolley:
         self.loaded_acceleration = loaded_acceleration
         self.currentX = 0
         self.currentY = 0
-        self.stallguard_threshold = 250
-
+        self.stallguard_threshold_1 = 250
+        self.stallguard_threshold_2 = 250
         # Pin Setup for ElectroMagnet
         GPIO.setmode(GPIO.BCM)  
         GPIO.setup(MAGNET_PIN, GPIO.OUT)  
@@ -72,20 +72,26 @@ class Trolley:
             tmc.set_spreadcycle(False)
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
-
-        self.tmc1.set_motor_enabled(True)
+            tmc.set_motor_enabled(True)
+            
         self.move_to_chess_origin()
-        self.tmc2.set_motor_enabled(True)
+        #self.tmc2.set_motor_enabled(True)
 
     def move_to_chess_origin(self):
         
         self.tmc1.set_acceleration(self.free_acceleration)
         self.tmc1.set_max_speed(self.free_speed)
-        self.move_in_direction(0.5, "DUPR")
+        self.tmc2.set_acceleration(self.free_acceleration)
+        self.tmc2.set_max_speed(self.free_speed)
         
+        #Find one edge
+        self.move_in_direction(0.5, "DUPR")
+        self.tmc2.run_to_position_steps_threaded(10000, MovementAbsRel.RELATIVE)
+        self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
+        self.tmc2.stop()
+        self.tmc2.set_motor_enabled(False)
         # Find the physical origin
-        self.tmc1.take_me_home(threshold=self.stallguard_threshold)
-
+        self.tmc1.take_me_home(threshold=self.stallguard_threshold_2)
         # Move to chess origin
         self.move_in_direction(0.5, "XRIGHT")
 
