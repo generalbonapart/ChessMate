@@ -8,8 +8,6 @@ from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
 from trolley import *
 
-HOST = '127.0.0.1'  # Localhost
-PORT = 65432        # Port to listen on
 previous_move = "a8a8"
 trolley = None
 mylcd = None
@@ -24,12 +22,12 @@ def convert_seconds_to_min_sec(seconds: int):
 def lcd_init(lcd_secret):
     global mylcd
     mylcd = RPi_I2C_driver.lcd()
-    mylcd.lcd_display_string(" Enter a secret key: ", 1)
-    mylcd.lcd_display_string(f"    {lcd_secret}  ", 3)
+    mylcd.lcd_display_secret_key(lcd_secret)
 
 def lcd_thread(time):
 
     print(time)
+    mylcd.lcd_clear()
     # Set the GPIO mode
     GPIO.setmode(GPIO.BCM)
     # Set up the button pin as an input with a pull-up resistor
@@ -45,9 +43,7 @@ def lcd_thread(time):
         white_time = convert_seconds_to_min_sec(white_seconds)
         black_time = convert_seconds_to_min_sec(black_seconds)
 
-        mylcd.lcd_display_string("    White      Black", 1)
-        mylcd.lcd_display_string(f"    {white_time}      {black_time}", 3)
-
+        mylcd.lcd_display_chess_time(white_time, black_time)
         sleep(0.1)
 
     mylcd.lcd_clear()

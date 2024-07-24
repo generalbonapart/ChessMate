@@ -93,11 +93,6 @@ def authorize():
     token = oauth.lichess.authorize_access_token()
     session['lichess_token'] = token['access_token']
     return redirect(url_for('index'))
-    # token = oauth.lichess.authorize_access_token()
-    # bearer = token['access_token']
-    # headers = {'Authorization': f'Bearer {bearer}'}
-    # response = requests.get(f"{LICHESS_HOST}/api/account", headers=headers)
-    # return jsonify(**response.json())
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port = 80, debug = True)

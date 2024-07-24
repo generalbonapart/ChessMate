@@ -214,4 +214,7 @@ class Trolley:
         GPIO.cleanup(MAGNET_PIN)
 
 
-
+if __name__ == "__main__":
+    trolley = Trolley()
+    trolley.demo_test()
+    
