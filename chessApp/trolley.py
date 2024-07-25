@@ -2,7 +2,7 @@ import sys
 import time
 from TMC2209.src.TMC_2209_StepperDriver import *
 from RPi import GPIO
-
+from chess_board import chess_board_inst, Move
 # Pins assignment
 MAGNET_PIN = 18
 
@@ -37,13 +37,6 @@ class Trolley:
         "DUPR": [1, -1, 1, 0]
     }
 
-    class Move:
-        def __init__(self, startX, startY, endX, endY):
-            self.startX = startX
-            self.startY = startY
-            self.endX = endX
-            self.endY = endY
-
     def __init__(self, free_speed = 1000, free_acceleration = 1000, loaded_speed = 500, loaded_acceleration = 300):
 
         self.free_speed = free_speed
@@ -54,6 +47,7 @@ class Trolley:
         self.currentY = 0
         self.stallguard_threshold_1 = 250
         self.stallguard_threshold_2 = 250
+        self.castling = None
         # Pin Setup for ElectroMagnet
         GPIO.setmode(GPIO.BCM)  
         GPIO.setup(MAGNET_PIN, GPIO.OUT)  
@@ -73,16 +67,12 @@ class Trolley:
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
             tmc.set_motor_enabled(True)
+            tmc.set_acceleration(self.free_acceleration)
+            tmc.set_max_speed(self.free_speed)
             
         self.move_to_chess_origin()
-        #self.tmc2.set_motor_enabled(True)
 
     def move_to_chess_origin(self):
-        
-        self.tmc1.set_acceleration(self.free_acceleration)
-        self.tmc1.set_max_speed(self.free_speed)
-        self.tmc2.set_acceleration(self.free_acceleration)
-        self.tmc2.set_max_speed(self.free_speed)
         
         #Find one edge
         self.move_in_direction(0.5, "DUPR")
@@ -90,8 +80,11 @@ class Trolley:
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
         self.tmc2.stop()
         self.tmc2.set_motor_enabled(False)
+        
         # Find the physical origin
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_2)
+        self.tmc2.set_motor_enabled(True)
+        
         # Move to chess origin
         self.move_in_direction(0.5, "XRIGHT")
 
@@ -112,8 +105,24 @@ class Trolley:
                 self.tmc2.run_to_position_steps_threaded(steps, MovementAbsRel.RELATIVE)
 
             self.tmc1.wait_for_movement_finished_threaded()
-            #self.tmc2.wait_for_movement_finished_threaded()
+            self.tmc2.wait_for_movement_finished_threaded()
 
+    def move_rook_castling(self, castling):
+        if castling[0] == 'white':
+            self.move_in_direction(0.5, 'YUP')
+        elif castling[0] == 'black':
+            self.move_in_direction(0.5, 'YDOWN')
+            
+        if castling[1] == 'short':
+            self.move_in_direction(2, 'XLEFT')
+        elif castling[1] == 'long':
+            self.move_in_direction(3, 'XRIGHT')
+        
+        if castling[0] == 'black':
+            self.move_in_direction(0.5, 'YUP')
+        elif castling[0] == 'white':
+            self.move_in_direction(0.5, 'YDOWN')     
+    
     def move_knight(self, delta_x, delta_y):
         if abs(delta_x) == 2 and abs(delta_y) == 1:
             self.move_in_direction(0.5, 'YUP' if delta_y > 0 else 'YDOWN')
@@ -124,15 +133,39 @@ class Trolley:
             self.move_in_direction(2, 'YUP' if delta_y > 0 else 'YDOWN')
             self.move_in_direction(0.5, 'XRIGHT' if delta_x > 0 else 'XLEFT')
 
+    def check_castling_move(self, move: Move):
+        piece_to_move = chess_board_inst.get_piece(move.startX, move.startY)
+        if piece_to_move == 'k' and move.startY == 7:
+            if move.startX == 4 and move.endX == 6:
+                return ('black', 'short', 'h8f8')
+            elif move.startX == 4 and move.endX == 2:
+                return ('black', 'long', 'a8d8')
+        
+        if piece_to_move == 'K' and move.startY == 0:
+            if move.startX == 4 and move.endX == 6:
+                return ('white', 'short', 'h1f1')
+            elif move.startX == 4 and move.endX == 2:
+                return ('white', 'long', 'a1d1')
+        
+        return None
+    
     def is_knight_move(self, delta_x, delta_y):
         return (abs(delta_x) == 2 and abs(delta_y) == 1) or (abs(delta_x) == 1 and abs(delta_y) == 2)
 
-    def calculate_movement(self, move: Move):
+    def calculate_movement(self, move: Move, rook_castling = False):
         # Calculate differences in x and y coordinates
         delta_x = move.endX - move.startX
         delta_y = move.endY - move.startY
 
         print(f"DeltaX: {delta_x}, DeltaY: {delta_y}")
+        
+        if rook_castling:
+            self.move_rook_castling(self.castling)
+            self.castling = None
+            return
+        
+        self.castling = self.check_castling_move(move)
+            
         if self.is_knight_move(delta_x, delta_y):
             self.move_knight(delta_x, delta_y)
         elif delta_x == delta_y:
@@ -155,6 +188,9 @@ class Trolley:
                 self.move_in_direction(delta_y, "YUP")
             elif delta_y < 0:
                 self.move_in_direction(-delta_y, "YDOWN")
+                
+        if self.castling is not None:
+            self.make_move(self.castling[2], rook_castling = True)
 
     def chess_to_cartesian(self, chess_position):
         # Ensure the input string is in the correct format (e.g., "a1" to "h8")
@@ -174,7 +210,7 @@ class Trolley:
 
         return self.Move(startX, startY, endX, endY)
 
-    def make_move(self, move_string):
+    def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
 
         # Bring the trolley to the piece
@@ -185,7 +221,7 @@ class Trolley:
         # Make a move with that piece
         self.set_speed_acceleration(loaded=True)
         self.magnet_ON()
-        self.calculate_movement(move)
+        self.calculate_movement(move, rook_castling)
         time.sleep(1)
         self.magnet_OFF()
 
