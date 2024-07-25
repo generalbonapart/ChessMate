@@ -20,32 +20,33 @@ def capture_image():
     # Load the image
     image_raw = cv2.imread(IMAGE)
     assert image_raw is not None, "Image not found"
-    scale_percent = 20  # percent of original size
+    scale_percent = 50  # percent of original size
     width = int(image_raw.shape[1] * scale_percent / 100)
     height = int(image_raw.shape[0] * scale_percent / 100)
     dim = (width, height)
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
+    return img
+"""
     pts1 = np.float32([[279, 130], [636, 138], [8, 517], [894, 516]])
     pts2 = np.float32([[0, 0], [800, 0], [0, 800], [800, 800]])
     M = cv2.getPerspectiveTransform(pts1, pts2)
     return cv2.warpPerspective(img, M, (800, 800))
+"""
 
-# Change this to use RPI-CAM command in the future
-def read_image():
-    image = cv2.imread('images/board_5.jpg')
-    scale_percent = 20  # percent of original size
-    width = int(image.shape[1] * scale_percent / 100)
-    height = int(image.shape[0] * scale_percent / 100)
-    dim = (width, height)
-
-    # resize image
-    img = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
-    pts1 = np.float32([[279, 130], [636, 138], [8, 517], [894, 516]])
-    pts2 = np.float32([[0, 0], [800, 0], [0, 800], [800, 800]])
-    M = cv2.getPerspectiveTransform(pts1, pts2)
-    return cv2.warpPerspective(img, M, (800, 800))
+def square_occupancy_init():
+    global board_state
+    board_state = [
+        [1, 1, 1, 1, 1, 1, 1, 1],  # 8th rank (Black's major pieces)
+        [1, 1, 1, 1, 1, 1, 1, 1],  # 7th rank (Black's pawns)
+        [0, 0, 0, 0, 0, 0, 0, 0],  # 6th rank (empty squares)
+        [0, 0, 0, 0, 0, 0, 0, 0],  # 5th rank (empty squares)
+        [0, 0, 0, 0, 0, 0, 0, 0],  # 4th rank (empty squares)
+        [0, 0, 0, 0, 0, 0, 0, 0],  # 3rd rank (empty squares)
+        [1, 1, 1, 1, 1, 1, 1, 1],  # 2nd rank (White's pawns)
+        [1, 1, 1, 1, 1, 1, 1, 1]   # 1st rank (White's major pieces)
+    ]
 
 def load_squares():
     with open(points_file, 'r') as file:
@@ -184,7 +185,7 @@ def get_user_move():
 
     # Detect current square occupation
     new_board_state = detect_square_occupation(chessboard_image, combined_mask, squares)
-    move, board_state = find_piece_movement()
+    move, board_state = find_piece_movement(board_state, new_board_state)
     # Show the image with detected squares
     cv2.imshow('Chessboard image', chessboard_image)
     cv2.imshow('Combined image', combined_mask)

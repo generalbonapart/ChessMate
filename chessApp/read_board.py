@@ -7,7 +7,7 @@ from lichess_api import add_user_move, get_bot_move, is_game_active, game_status
 # from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
 from trolley import *
-from square_occupancy import get_user_move
+from square_occupancy import get_user_move, square_occupancy_init
 
 HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
@@ -106,6 +106,7 @@ def init_board_control(time):
     thread2 = threading.Thread(target=lcd_thread, args=(time, ))
     thread1.start()
     thread2.start()
+    square_occupancy_init()
     # board_detection_init()
 
 if __name__ == "__main__":
