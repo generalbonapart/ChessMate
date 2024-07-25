@@ -4,9 +4,10 @@ import RPi_I2C_driver
 from RPi import GPIO
 from chess_board import convert_move_to_board_notation
 from lichess_api import add_user_move, get_bot_move, is_game_active, game_status, move_accepted, is_move_legal, get_time_left
-from board_detection import board_detection_init, get_user_move, report_bot_move
+# from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
 from trolley import *
+from square_occupancy import get_user_move
 
 HOST = '127.0.0.1'  # Localhost
 PORT = 65432        # Port to listen on
@@ -61,12 +62,12 @@ def main_thread():
     global previous_move, trolley
     sleep(1)
     while is_game_active():
-        # i = input("Press r when move is done, q to exit")
-        # if i== 'q':
-        #     user_move = 'q'
-        # else:
-        #     user_move = get_user_move()
-        user_move = input("User move: ")
+        i = input("Press r when move is done, q to exit")
+        if i== 'q':
+            user_move = 'q'
+        else:
+            user_move = get_user_move()
+        # user_move = input("User move: ")
         # Read the button status
         #while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
             #sleep(0.1)
@@ -105,8 +106,7 @@ def init_board_control(time):
     thread2 = threading.Thread(target=lcd_thread, args=(time, ))
     thread1.start()
     thread2.start()
-    board_detection_init()
-
+    # board_detection_init()
 
 if __name__ == "__main__":
     init_board_control()
