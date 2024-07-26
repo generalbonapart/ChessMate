@@ -76,7 +76,7 @@ class Trolley:
         
         #Find one edge
         self.move_in_direction(0.5, "DUPR")
-        self.tmc2.run_to_position_steps_threaded(10000, MovementAbsRel.RELATIVE)
+        self.tmc2.run_to_position_steps_threaded(-10000, MovementAbsRel.RELATIVE)
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
         self.tmc2.stop()
         self.tmc2.set_motor_enabled(False)
