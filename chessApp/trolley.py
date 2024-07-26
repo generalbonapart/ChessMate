@@ -175,7 +175,7 @@ class Trolley:
                 self.move_knight(delta_x, delta_y)
                 return
                 
-        elif delta_x == delta_y:
+        if delta_x == delta_y:
             if delta_x > 0:
                 self.move_in_direction(delta_x, "DUPR")
             else:
