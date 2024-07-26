@@ -20,8 +20,8 @@ bDir = 1
 aPower = 2
 bPower = 3
 
-SQUARE_STEP = 510
-DIAG_STEP = 1020
+SQUARE_STEP = 505
+DIAG_STEP = 1010
 
 class Trolley:
 
@@ -86,7 +86,7 @@ class Trolley:
         self.tmc2.set_motor_enabled(True)
         
         # Move to chess origin
-        self.move_in_direction(0.5, "XRIGHT")
+        self.move_in_direction(0.4, "XRIGHT")
 
     def move_in_direction(self, inc, direction: str):
         
@@ -170,8 +170,9 @@ class Trolley:
                 
             if self.is_knight_move(delta_x, delta_y):
                 self.move_knight(delta_x, delta_y)
+                return
                 
-        if delta_x == delta_y:
+        elif delta_x == delta_y:
             if delta_x > 0:
                 self.move_in_direction(delta_x, "DUPR")
             else:
