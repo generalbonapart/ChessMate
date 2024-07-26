@@ -190,6 +190,7 @@ class Trolley:
                 self.move_in_direction(-delta_y, "YDOWN")
                 
         if self.castling is not None:
+            print(self.castling)
             self.make_move(self.castling[2], rook_castling = True)
 
     def chess_to_cartesian(self, chess_position):
@@ -212,7 +213,8 @@ class Trolley:
 
     def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
-
+        if rook_castling:
+            print(move_string)
         # Bring the trolley to the piece
         free_move = Move(self.currentX, self.currentY, move.startX, move.startY)
         self.set_speed_acceleration(loaded=False)
