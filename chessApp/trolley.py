@@ -90,6 +90,7 @@ class Trolley:
 
     def move_in_direction(self, inc, direction: str):
         
+        print(inc, direction)
         if direction in self.MOTOR_DIREC:
             bits = self.MOTOR_DIREC[direction]
             if direction in ["XLEFT", "XRIGHT", "YUP", "YDOWN"]: 
