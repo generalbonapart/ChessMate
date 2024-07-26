@@ -157,7 +157,10 @@ class Trolley:
         # Calculate differences in x and y coordinates
         delta_x = move.endX - move.startX
         delta_y = move.endY - move.startY
-
+        
+        if delta_x == 0 and delta_y == 0:
+            return 
+        
         print(f"DeltaX: {delta_x}, DeltaY: {delta_y}")
         
         if loaded_move:
