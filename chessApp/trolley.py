@@ -107,20 +107,20 @@ class Trolley:
             self.tmc1.wait_for_movement_finished_threaded()
             self.tmc2.wait_for_movement_finished_threaded()
 
-    def move_rook_castling(self, castling):
-        if castling[0] == 'white':
+    def move_rook_castling(self):
+        if self.castling[0] == 'white':
             self.move_in_direction(0.5, 'YUP')
-        elif castling[0] == 'black':
+        elif self.castling[0] == 'black':
             self.move_in_direction(0.5, 'YDOWN')
             
-        if castling[1] == 'short':
+        if self.castling[1] == 'short':
             self.move_in_direction(2, 'XLEFT')
-        elif castling[1] == 'long':
+        elif self.castling[1] == 'long':
             self.move_in_direction(3, 'XRIGHT')
         
-        if castling[0] == 'black':
+        if self.castling[0] == 'black':
             self.move_in_direction(0.5, 'YUP')
-        elif castling[0] == 'white':
+        elif self.castling[0] == 'white':
             self.move_in_direction(0.5, 'YDOWN')     
     
     def move_knight(self, delta_x, delta_y):
@@ -152,23 +152,26 @@ class Trolley:
     def is_knight_move(self, delta_x, delta_y):
         return (abs(delta_x) == 2 and abs(delta_y) == 1) or (abs(delta_x) == 1 and abs(delta_y) == 2)
 
-    def calculate_movement(self, move: Move, rook_castling = False):
+
+    def calculate_movement(self, move: Move, rook_castling = False, loaded_move = False):
         # Calculate differences in x and y coordinates
         delta_x = move.endX - move.startX
         delta_y = move.endY - move.startY
 
         print(f"DeltaX: {delta_x}, DeltaY: {delta_y}")
         
-        if rook_castling:
-            self.move_rook_castling(self.castling)
-            self.castling = None
-            return
-        
-        self.castling = self.check_castling_move(move)
+        if loaded_move:
+            if rook_castling:
+                self.move_rook_castling()
+                self.castling = None
+                return
             
-        if self.is_knight_move(delta_x, delta_y):
-            self.move_knight(delta_x, delta_y)
-        elif delta_x == delta_y:
+            self.castling = self.check_castling_move(move)
+                
+            if self.is_knight_move(delta_x, delta_y):
+                self.move_knight(delta_x, delta_y)
+                
+        if delta_x == delta_y:
             if delta_x > 0:
                 self.move_in_direction(delta_x, "DUPR")
             else:
@@ -223,7 +226,7 @@ class Trolley:
         # Make a move with that piece
         self.set_speed_acceleration(loaded=True)
         self.magnet_ON()
-        self.calculate_movement(move, rook_castling)
+        self.calculate_movement(move, rook_castling=rook_castling, loaded_move=True)
         time.sleep(1)
         self.magnet_OFF()
 
