@@ -20,7 +20,7 @@ bDir = 1
 aPower = 2
 bPower = 3
 
-SQUARE_STEP = 505
+SQUARE_STEP = 506
 DIAG_STEP = 1010
 
 class Trolley:
