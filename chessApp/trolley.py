@@ -191,10 +191,6 @@ class Trolley:
                 self.move_in_direction(delta_y, "YUP")
             elif delta_y < 0:
                 self.move_in_direction(-delta_y, "YDOWN")
-                
-        if self.castling is not None:
-            print(self.castling)
-            self.make_move(self.castling[2], rook_castling = True)
 
     def chess_to_cartesian(self, chess_position):
         # Ensure the input string is in the correct format (e.g., "a1" to "h8")
@@ -233,6 +229,9 @@ class Trolley:
         self.currentX = move.endX
         self.currentY = move.endY
 
+        if self.castling is not None:
+            print(self.castling)
+            self.make_move(self.castling[2], rook_castling = True)
 
     def demo_test(self):
         # Prompt the user for a direction
