@@ -20,7 +20,7 @@ bDir = 1
 aPower = 2
 bPower = 3
 
-SQUARE_STEP = 506
+SQUARE_STEP = 505
 DIAG_STEP = 1010
 
 class Trolley:
@@ -94,9 +94,9 @@ class Trolley:
         if direction in self.MOTOR_DIREC:
             bits = self.MOTOR_DIREC[direction]
             if direction in ["XLEFT", "XRIGHT", "YUP", "YDOWN"]: 
-                base_step = SQUARE_STEP*inc
+                base_step = int(SQUARE_STEP*inc)
             elif direction in ["DUPL", "DUPR", "DDOWNL", "DDOWNR"]:
-                base_step = DIAG_STEP*inc
+                base_step = int(DIAG_STEP*inc)
 
             if bits[aPower]:
                 steps = base_step * bits[aDir]
