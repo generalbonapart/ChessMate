@@ -208,13 +208,13 @@ class Trolley:
         startY = int(chess_position[1]) - 1
         endY = int(chess_position[3]) - 1
 
-        return self.Move(startX, startY, endX, endY)
+        return Move(startX, startY, endX, endY)
 
     def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
 
         # Bring the trolley to the piece
-        free_move = self.Move(self.currentX, self.currentY, move.startX, move.startY)
+        free_move = Move(self.currentX, self.currentY, move.startX, move.startY)
         self.set_speed_acceleration(loaded=False)
         self.calculate_movement(free_move)
 
