@@ -65,13 +65,6 @@ def is_move_legal():
 # Function to get game moves
 def get_bot_move():
     last = None
-    # for event in client.board.stream_game_state(game_id):
-    #     #print(event)
-    #     if 'state' in event:
-    #         moves = event['state']['moves']
-    #         if moves:
-    #             last = moves.split()[-1]
-    #         return last
     if game_state:
         if 'moves' in game_state:
             moves = game_state['moves']
@@ -85,6 +78,12 @@ def get_time_left():
         black_seconds = game_state['btime']//1000
         return (white_seconds, black_seconds)
     return None, None
+
+def get_game_status():
+    if game_state:
+        status = game_state['status']
+        return status
+    return None
 
 def add_user_move(move):
     global user_move

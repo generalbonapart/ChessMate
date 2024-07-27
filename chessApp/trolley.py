@@ -124,7 +124,43 @@ class Trolley:
         elif self.castling[0] == 'white':
             self.move_in_direction(0.5, 'YDOWN')     
     
+    def check_path_for_knight(self, move: Move):
+        delta_x = move.endX - move.startX
+        
+        if abs(delta_x) == 2:
+            x_middle = (move.startX + move.endX)/2
+            if chess_board_inst.is_empty(x_middle, move.endY):
+                first_move = Move(move.startX, move.startY, x_middle, move.endY)
+                self.calculate_movement(first_move)
+                second_move = Move(x_middle, move.endY, move.endX, move.endY)
+                self.calculate_movement(second_move)
+                return True
+            elif chess_board_inst.is_empty(x_middle, move.startY):
+                first_move = Move(move.startX, move.startY, x_middle, move.startY)
+                self.calculate_movement(first_move)
+                second_move = Move(x_middle, move.startY, move.endX, move.endY)
+                self.calculate_movement(second_move)
+                return True
+        else:
+            y_middle = (move.startY + move.endY)/2
+            if chess_board_inst.is_empty(move.startX, y_middle):
+                first_move = Move(move.startX, move.startY, move.startX, y_middle)
+                self.calculate_movement(first_move)
+                second_move = Move(move.startX, y_middle, move.endX, move.endY)
+                self.calculate_movement(second_move)
+                return True
+            
+            if chess_board_inst.is_empty(move.endX, y_middle):
+                first_move = Move(move.startX, move.startY, move.endX, y_middle)
+                self.calculate_movement(first_move)
+                second_move = Move(move.endX, y_middle, move.endX, move.endY)
+                self.calculate_movement(second_move)
+                return True
+        
+        return False
+        
     def move_knight(self, delta_x, delta_y):
+
         if abs(delta_x) == 2 and abs(delta_y) == 1:
             self.move_in_direction(0.5, 'YUP' if delta_y > 0 else 'YDOWN')
             self.move_in_direction(2, 'XRIGHT' if delta_x > 0 else 'XLEFT')
@@ -153,7 +189,6 @@ class Trolley:
     def is_knight_move(self, delta_x, delta_y):
         return (abs(delta_x) == 2 and abs(delta_y) == 1) or (abs(delta_x) == 1 and abs(delta_y) == 2)
 
-
     def calculate_movement(self, move: Move, rook_castling = False, loaded_move = False):
         # Calculate differences in x and y coordinates
         delta_x = move.endX - move.startX
@@ -173,6 +208,8 @@ class Trolley:
             self.castling = self.check_castling_move(move)
                 
             if self.is_knight_move(delta_x, delta_y):
+                if self.check_path_for_knight(move):
+                    return
                 self.move_knight(delta_x, delta_y)
                 return
                 
@@ -217,6 +254,7 @@ class Trolley:
 
     def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
+        chess_board_inst.move_piece(move)
         if rook_castling:
             print(move_string)
         # Bring the trolley to the piece

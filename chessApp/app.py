@@ -23,11 +23,13 @@ app.config['LICHESS_CLIENT_ID'] =  os.getenv("LICHESS_CLIENT_ID")
 app.config['LICHESS_AUTHORIZE_URL'] = f"{LICHESS_HOST}/oauth"
 app.config['LICHESS_ACCESS_TOKEN_URL'] = f"{LICHESS_HOST}/api/token"
 lcd_secret = None
+game_in_progress = False
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
 
 def handle_game_start(request):
-
+    global game_in_progress
+    
     params = GameParams()
     params.side = request.form['color']
     params.time = int(request.form['time_limit']) * 60 # time in seconds
@@ -39,6 +41,12 @@ def handle_game_start(request):
         init_board_control(params.time)
         # Launch lichess game via API
         launch_game(params, user_api_token)
+        game_in_progress = True
+    else:
+        response = jsonify({'error': 'The lichess API token is missing'})
+        response.status_code = 401
+        return response
+    
     
         
 @app.route('/login', methods=['GET', 'POST'])
