@@ -9,7 +9,7 @@ board_state = None
 IMAGE = 'images/board.jpg'
 CURDIR = os.getcwd()
 OUTPUT_FILE = os.path.join(CURDIR, IMAGE)
-points_file = 'pointsV2.json'
+points_file = 'points.json'
 
 def capture_image():
     command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
@@ -27,7 +27,10 @@ def capture_image():
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    return img
+    pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
+    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    return cv2.warpPerspective(img,M,(800,800))
 
 def square_occupancy_init():
     global board_state
@@ -71,12 +74,12 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([50, 30, 0])
-    upper_black = np.array([110, 100, 40])
+    lower_black = np.array([95, 30, 15])
+    upper_black = np.array([115, 100, 80])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([36, 30, 145])
-    upper_white = np.array([80, 75, 220])
+    lower_white = np.array([30, 15, 145])
+    upper_white = np.array([80, 80, 230])
 
     # Create masks for black and white pieces
     mask_black = cv2.inRange(hsv, lower_black, upper_black)
@@ -85,7 +88,7 @@ def get_combined_mask(image):
     # Combine masks
     combined_mask = cv2.bitwise_or(mask_black, mask_white)
 
-    return combined_mask
+    return white_mask, black_mask
 
 def is_point_in_square(point, square):
     x, y = point
@@ -94,8 +97,9 @@ def is_point_in_square(point, square):
 
 def detect_square_occupation(image, binary_mask, squares):
     contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    min_width = 15
-    min_height = 10
+    min_width = 12
+    min_height = 12
+    
     game_state = [[0 for _ in range(8)] for _ in range(8)]
 
     # Iterate through each square
@@ -123,15 +127,6 @@ def detect_square_occupation(image, binary_mask, squares):
         cv2.rectangle(image, tuple(top_left), tuple(bottom_right), color, 2)
     return game_state
 
-def show_HSV(img):
-    # Extract HSV channels
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    h, s, v = cv2.split(hsv)
-    # Display each channel if needed
-    cv2.imshow('Adjusted Hue Channel', h)
-    cv2.imshow('Adjusted Saturation Channel', s)
-    cv2.imshow('Adjusted Value Channel', v)
-
 def compare_board_state(previous_state, current_state):
     differences = []
     for row in range(8):
@@ -142,36 +137,47 @@ def compare_board_state(previous_state, current_state):
 
 def find_piece_movement(previous_state, current_state):
     differences = compare_board_state(previous_state, current_state)
+    
+    if len(differences) == 2:
+        start_pos = None
+        end_pos = None
+        for diff in differences:
+            row, col, prev_value, curr_value = diff
+            if prev_value == 1 and curr_value == 0:
+                start_pos = (row, col)
+            elif prev_value == 0 and curr_value == 1:
+                end_pos = (row, col)
 
-    if len(differences) != 2:
-        return None  # If there aren't exactly two differences, something went wrong.
+        if start_pos and end_pos:
+            # Normal move
+            start_notation = chr(start_pos[1] + ord('a')) + str(start_pos[0] + 1)
+            end_notation = chr(end_pos[1] + ord('a')) + str(end_pos[0] + 1)
+            move = start_notation + end_notation
+            return move, current_state
 
-    start_pos = None
-    end_pos = None
-
-    for diff in differences:
+    elif len(differences) == 1:
+        diff = differences[0]
         row, col, prev_value, curr_value = diff
-        if prev_value == 1 and curr_value == 0:
-            start_pos = (row, col)
-        elif prev_value == 0 and curr_value == 1:
+        if prev_value == 0 and curr_value == 1:
             end_pos = (row, col)
+            # Assume the start position is the square that was previously occupied
+            start_pos = find_start_pos(previous_state, end_pos)
 
-    if start_pos is None or end_pos is None:
-        return None  # If start or end positions are not properly detected.
+            if start_pos:
+                # Capture move
+                start_notation = chr(start_pos[1] + ord('a')) + str(start_pos[0] + 1)
+                end_notation = chr(end_pos[1] + ord('a')) + str(end_pos[0] + 1)
+                move = start_notation + end_notation
+                return move, current_state
 
-    # Convert row, col indices to chess notation
-    start_notation = chr(start_pos[1] + ord('a')) + str(8 - start_pos[0])
-    end_notation = chr(end_pos[1] + ord('a')) + str(8 - end_pos[0])
-
-    move = start_notation + end_notation
-    return move, current_state
+    print("Error: Unable to detect a valid move.")
+    return None
 
 def get_user_move():
     global board_state
     # Capture and process the current chessboard image
     chessboard_image = capture_image()
-
-    # Get combined mask
+    
     combined_mask = get_combined_mask(chessboard_image)
 
     # Load squares
@@ -179,14 +185,18 @@ def get_user_move():
 
     # Detect current square occupation
     new_board_state = detect_square_occupation(chessboard_image, combined_mask, squares)
-    move, board_state = find_piece_movement(board_state, new_board_state)
-    # Show the image with detected squares
+    for row in new_board_state:
+        print(row)
+    differences = compare_board_state(board_state, new_board_state)
+    print(differences)
+    #move, board_state = find_piece_movement(board_state, new_board_state)
+    #print(move)
     cv2.imshow('Chessboard image', chessboard_image)
     cv2.imshow('Combined image', combined_mask)
-    show_HSV(chessboard_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    return move
 
 if __name__ == "__main__":
-    get_user_move()
+    square_occupancy_init()
+    while(input("Enter any key to continue or q to exit ") != 'q'):
+        get_user_move()
