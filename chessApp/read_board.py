@@ -24,8 +24,10 @@ def lcd_init(lcd_secret):
     mylcd.lcd_display_secret_key(lcd_secret)
 
 def lcd_thread(time):
-
-    print(time)
+    global mylcd
+    if mylcd is None:
+        mylcd = RPi_I2C_driver.lcd()
+        
     mylcd.lcd_clear()
     # Set the GPIO mode
     GPIO.setmode(GPIO.BCM)
