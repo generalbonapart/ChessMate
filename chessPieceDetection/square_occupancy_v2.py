@@ -35,14 +35,14 @@ def capture_image():
 def square_occupancy_init():
     global board_state
     board_state = [
-        [1, 1, 1, 1, 1, 1, 1, 1],  # 8th rank (Black's major pieces)
-        [1, 1, 1, 1, 1, 1, 1, 1],  # 7th rank (Black's pawns)
-        [0, 0, 0, 0, 0, 0, 0, 0],  # 6th rank (empty squares)
-        [0, 0, 0, 0, 0, 0, 0, 0],  # 5th rank (empty squares)
-        [0, 0, 0, 0, 0, 0, 0, 0],  # 4th rank (empty squares)
-        [0, 0, 0, 0, 0, 0, 0, 0],  # 3rd rank (empty squares)
-        [1, 1, 1, 1, 1, 1, 1, 1],  # 2nd rank (White's pawns)
-        [1, 1, 1, 1, 1, 1, 1, 1]   # 1st rank (White's major pieces)
+        [2, 2, 2, 2, 2, 2, 2, 2],
+        [2, 2, 2, 2, 2, 2, 2, 2],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1] 
     ]
 
 def load_squares():
@@ -82,11 +82,8 @@ def get_combined_mask(image):
     upper_white = np.array([80, 80, 230])
 
     # Create masks for black and white pieces
-    mask_black = cv2.inRange(hsv, lower_black, upper_black)
-    mask_white = cv2.inRange(hsv, lower_white, upper_white)
-
-    # Combine masks
-    combined_mask = cv2.bitwise_or(mask_black, mask_white)
+    black_mask = cv2.inRange(hsv, lower_black, upper_black)
+    white_mask = cv2.inRange(hsv, lower_white, upper_white)
 
     return white_mask, black_mask
 
@@ -95,11 +92,11 @@ def is_point_in_square(point, square):
     top_left, top_right, bottom_left, _ = square
     return top_left[0] <= x <= top_right[0] and top_left[1] <= y <= bottom_left[1]
 
-def detect_square_occupation(image, binary_mask, squares):
-    contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    min_width = 12
-    min_height = 12
-    
+def detect_square_occupation(image, mask_black, mask_white, squares):
+    contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours_white, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    min_width = 10
+    min_height = 10
     game_state = [[0 for _ in range(8)] for _ in range(8)]
 
     # Iterate through each square
@@ -107,25 +104,31 @@ def detect_square_occupation(image, binary_mask, squares):
         row = idx // 8  # Calculate row index (0 to 7)
         col = idx % 8   # Calculate column index (0 to 7)
 
-        square_occupied = False
-        # Iterate through each contour
-        for contour in contours:
+        square_occupied = 0  # 0 for empty, 1 for white, 2 for black
+        #check for white pieces
+        for contour in contours_white:
             x, y, w, h = cv2.boundingRect(contour)
             if w >= min_width and h >= min_height:
                 bottom_left_corner = (x, y + h)
                 bottom_right_corner = (x + w, y + h)
 
                 if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
-                    square_occupied = True
+                    square_occupied = 1 # White piece
                     break
 
-        game_state[row][col] = 1 if square_occupied else 0
+        # Check for black pieces if white piece wasn't found
+        if square_occupied == 0:
+            for contour in contours_black:
+                x, y, w, h = cv2.boundingRect(contour)
+                if w >= min_width and h >= min_height:
+                    bottom_left_corner = (x, y + h)
+                    bottom_right_corner = (x + w, y + h)
 
-        # Draw the square on the output image
-        color = (0, 255, 0) if square_occupied else (0, 0, 255)
-        top_left, top_right, bottom_left, bottom_right = square
-        cv2.rectangle(image, tuple(top_left), tuple(bottom_right), color, 2)
-    return game_state
+                    if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
+                        square_occupied = 2 # Black piece
+                        break
+
+        game_state[row][col] = square_occupied
 
 def compare_board_state(previous_state, current_state):
     differences = []
@@ -155,21 +158,6 @@ def find_piece_movement(previous_state, current_state):
             move = start_notation + end_notation
             return move, current_state
 
-    elif len(differences) == 1:
-        diff = differences[0]
-        row, col, prev_value, curr_value = diff
-        if prev_value == 0 and curr_value == 1:
-            end_pos = (row, col)
-            # Assume the start position is the square that was previously occupied
-            start_pos = find_start_pos(previous_state, end_pos)
-
-            if start_pos:
-                # Capture move
-                start_notation = chr(start_pos[1] + ord('a')) + str(start_pos[0] + 1)
-                end_notation = chr(end_pos[1] + ord('a')) + str(end_pos[0] + 1)
-                move = start_notation + end_notation
-                return move, current_state
-
     print("Error: Unable to detect a valid move.")
     return None
 
@@ -178,13 +166,13 @@ def get_user_move():
     # Capture and process the current chessboard image
     chessboard_image = capture_image()
     
-    combined_mask = get_combined_mask(chessboard_image)
+    white_mask, black_mask = get_combined_mask(chessboard_image)
 
     # Load squares
     squares = load_squares()
 
     # Detect current square occupation
-    new_board_state = detect_square_occupation(chessboard_image, combined_mask, squares)
+    new_board_state = detect_square_occupation(chessboard_image, white_mask, black_mask, squares)
     for row in new_board_state:
         print(row)
     differences = compare_board_state(board_state, new_board_state)
@@ -192,7 +180,6 @@ def get_user_move():
     #move, board_state = find_piece_movement(board_state, new_board_state)
     #print(move)
     cv2.imshow('Chessboard image', chessboard_image)
-    cv2.imshow('Combined image', combined_mask)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
