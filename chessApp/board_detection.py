@@ -118,16 +118,16 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                     break
 
         # Check for black pieces if white piece wasn't found
-        if square_occupied == 0:
-            for contour in contours_black:
-                x, y, w, h = cv2.boundingRect(contour)
-                if w >= min_width and h >= min_height:
-                    bottom_left_corner = (x, y + h)
-                    bottom_right_corner = (x + w, y + h)
+        # if square_occupied == 0:
+        #     for contour in contours_black:
+        #         x, y, w, h = cv2.boundingRect(contour)
+        #         if w >= min_width and h >= min_height:
+        #             bottom_left_corner = (x, y + h)
+        #             bottom_right_corner = (x + w, y + h)
 
-                    if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
-                        square_occupied = 2 # Black piece
-                        break
+        #             if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
+        #                 square_occupied = 2 # Black piece
+        #                 break
 
         game_state[row][col] = square_occupied
 
