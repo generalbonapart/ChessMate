@@ -176,7 +176,7 @@ def find_piece_movement(previous_state, current_state):
             return move, current_state
 
     # Castling detection
-    if len(difference) == 4:
+    if len(differences) == 4:
         king_start_pos = (7, 4)
         kingside_rook_start_pos = (7, 7)
         queenside_rook_start_pos = (7, 0)
