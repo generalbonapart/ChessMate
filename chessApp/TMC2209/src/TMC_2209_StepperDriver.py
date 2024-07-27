@@ -191,7 +191,6 @@ class TMC_2209:
         self._deinit_finished = True
 
 
-
     def set_motor_enabled(self, en):
         """enables or disables the motor current output
 
@@ -283,23 +282,22 @@ class TMC_2209:
             return
         self._sg_callback()
 
-    def take_me_home(self, speed, threshold, direction: int = Direction.CCW):
+    def take_me_home(self, threshold, direction: int = Direction.CCW):
 
-        self.tmc_logger.log(f"Testing homing with speed = {speed}, threshold = {threshold}", Loglevel.INFO)
-        self.set_max_speed(speed)
+        self.tmc_logger.log(f"Testing homing with threshold = {threshold}", Loglevel.INFO)
         self.set_spreadcycle(0)
         if direction == Direction.CCW:
             steps = MAX_STEPS_ALLOWED * (-1)
         elif direction == Direction.CW:
             steps = MAX_STEPS_ALLOWED
         self.run_to_position_steps_threaded(steps, MovementAbsRel.RELATIVE)
-        print("Position: ", self.get_current_position())
+        #print("Position: ", self.get_current_position())
         while self.get_movement_phase() != MovementPhase.STANDSTILL:
             stallguard_result = self.get_stallguard_result()
 
             if (self.get_movement_phase() == MovementPhase.MAXSPEED and
                 stallguard_result < threshold):
-                print("Position: ", self.get_current_position())
+                #print("Position: ", self.get_current_position())
                 self.stop()
                 break
 
