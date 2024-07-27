@@ -62,6 +62,9 @@ def main_thread():
     sleep(1)
     while is_game_active():
         
+        # Read the button status
+        while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
+            sleep(0.1)
         user_move = get_user_move()
         feedback = input(f'{user_move} ? ')
         if feedback == 'y':
@@ -69,9 +72,6 @@ def main_thread():
         else:
             user_move = feedback
         #user_move = input("User move: ")
-        # Read the button status
-        while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
-            sleep(0.1)
 
         add_user_move(user_move)
         previous_move = user_move

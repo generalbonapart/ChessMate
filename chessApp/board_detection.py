@@ -188,7 +188,7 @@ def find_piece_movement(previous_state, current_state):
                 return move, current_state
 
     print("Error: Unable to detect a valid move.")
-    return None
+    return 'a8a8', current_state
 
 def get_user_move():
     global board_state
