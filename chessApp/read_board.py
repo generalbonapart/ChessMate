@@ -64,8 +64,8 @@ def main_thread():
         #     user_move = get_user_move()
         user_move = input("User move: ")
         # Read the button status
-        #while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
-            #sleep(0.1)
+        while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
+            sleep(0.1)
 
         add_user_move(user_move)
         previous_move = user_move
