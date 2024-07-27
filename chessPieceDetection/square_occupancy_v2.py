@@ -74,34 +74,34 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([95, 30, 15])
+    lower_black = np.array([50, 30, 0])
     upper_black = np.array([115, 100, 80])
 
     # Define color range for white pieces (these ranges might need adjustment)
     lower_white = np.array([30, 15, 145])
-    upper_white = np.array([80, 80, 230])
+    upper_white = np.array([90, 80, 230])
 
     # Create masks for black and white pieces
-    black_mask = cv2.inRange(hsv, lower_black, upper_black)
-    white_mask = cv2.inRange(hsv, lower_white, upper_white)
+    mask_black = cv2.inRange(hsv, lower_black, upper_black)
+    mask_white = cv2.inRange(hsv, lower_white, upper_white)
 
-    return white_mask, black_mask
+    return mask_white, mask_black
 
 def is_point_in_square(point, square):
     x, y = point
     top_left, top_right, bottom_left, _ = square
     return top_left[0] <= x <= top_right[0] and top_left[1] <= y <= bottom_left[1]
 
-def detect_square_occupation(image, mask_black, mask_white, squares):
-    contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def detect_square_occupation(image, mask_white, mask_black, squares):
     contours_white, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     min_width = 10
     min_height = 10
     game_state = [[0 for _ in range(8)] for _ in range(8)]
 
     # Iterate through each square
     for idx, square in enumerate(squares):
-        row = idx // 8  # Calculate row index (0 to 7)
+        row = 7 - (idx // 8)  # Calculate row index (0 to 7)
         col = idx % 8   # Calculate column index (0 to 7)
 
         square_occupied = 0  # 0 for empty, 1 for white, 2 for black
@@ -130,6 +130,8 @@ def detect_square_occupation(image, mask_black, mask_white, squares):
 
         game_state[row][col] = square_occupied
 
+    return game_state
+
 def compare_board_state(previous_state, current_state):
     differences = []
     for row in range(8):
@@ -139,24 +141,55 @@ def compare_board_state(previous_state, current_state):
     return differences
 
 def find_piece_movement(previous_state, current_state):
+
     differences = compare_board_state(previous_state, current_state)
-    
+    print(f"The length of differences: {len(differences)}")
+    # For piece movement or piece capture
     if len(differences) == 2:
         start_pos = None
         end_pos = None
+        start_piece = None
+        end_piece = None
+
         for diff in differences:
             row, col, prev_value, curr_value = diff
-            if prev_value == 1 and curr_value == 0:
-                start_pos = (row, col)
-            elif prev_value == 0 and curr_value == 1:
-                end_pos = (row, col)
+            if prev_value != curr_value:
+                if prev_value != 0 and curr_value == 0:
+                    start_pos = (row, col)
+                    start_piece = prev_value
+                    print(f"Start position: {(row, col)}")
+                else:
+                    end_pos = (row, col)
+                    end_piece = curr_value
+                    print(f"End position: {(row, col)}")
 
         if start_pos and end_pos:
-            # Normal move
-            start_notation = chr(start_pos[1] + ord('a')) + str(start_pos[0] + 1)
-            end_notation = chr(end_pos[1] + ord('a')) + str(end_pos[0] + 1)
+            # Convert row, col indices to chess notation
+            start_notation = chr(start_pos[1] + ord('a')) + str(8 - start_pos[0])
+            end_notation = chr(end_pos[1] + ord('a')) + str(8 - end_pos[0])
             move = start_notation + end_notation
+
+            # Print the piece type
+            piece_type = "White" if start_piece == 1 else "Black"
+            print(f"Detected move: {move} (Piece: {piece_type})")
+
             return move, current_state
+
+    # Castling detection
+    if len(difference) == 4:
+        king_start_pos = (7, 4)
+        kingside_rook_start_pos = (7, 7)
+        queenside_rook_start_pos = (7, 0)
+        start_positions = [(row, col) for row, col, prev_value, curr_value in differences if prev_value == 1 and curr_value == 0]
+        end_positions = [(row, col) for row, col, prev_value, curr_value in differences if prev_value == 0 and curr_value == 1]
+
+        if king_start_pos in start_positions and any(rook_start_pos in start_positions for rook_start_pos in [kingside_rook_start_pos, queenside_rook_start_pos]):
+            if (7, 6) in end_positions and (7, 5) in end_positions:  # Kingside castling
+                move = 'e1g1'
+                return move, current_state
+            elif (7, 2) in end_positions and (7, 3) in end_positions:  # Queenside castling
+                move = 'e1c1'
+                return move, current_state
 
     print("Error: Unable to detect a valid move.")
     return None
@@ -166,20 +199,29 @@ def get_user_move():
     # Capture and process the current chessboard image
     chessboard_image = capture_image()
     
-    white_mask, black_mask = get_combined_mask(chessboard_image)
+    mask_white, mask_black = get_combined_mask(chessboard_image)
 
     # Load squares
     squares = load_squares()
 
     # Detect current square occupation
-    new_board_state = detect_square_occupation(chessboard_image, white_mask, black_mask, squares)
-    for row in new_board_state:
-        print(row)
-    differences = compare_board_state(board_state, new_board_state)
-    print(differences)
-    #move, board_state = find_piece_movement(board_state, new_board_state)
-    #print(move)
+    new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
+
+    if new_board_state is None:
+        print("Error: Unable to detect board state.")
+    else:
+        move, new_board_state = find_piece_movement(board_state, new_board_state)
+
+        if move or board_state is None: 
+            print("Error: Unable to detect a valid move.")
+        else:
+            board_state = new_board_state
+            for row in board_state:
+                print(row)
+
     cv2.imshow('Chessboard image', chessboard_image)
+    #cv2.imshow('White Mask', mask_white)
+    #cv2.imshow('Black Mask', mask_black)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
