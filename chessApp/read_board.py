@@ -2,7 +2,6 @@ import threading
 from time import sleep
 import RPi_I2C_driver
 from RPi import GPIO
-from chess_board import convert_move_to_board_notation
 from lichess_api import add_user_move, get_bot_move, is_game_active, game_status, move_accepted, is_move_legal, get_time_left
 from board_detection import board_detection_init, get_user_move, report_bot_move
 from models import GameParams
