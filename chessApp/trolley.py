@@ -128,7 +128,7 @@ class Trolley:
         delta_x = move.endX - move.startX
         
         if abs(delta_x) == 2:
-            x_middle = (move.startX + move.endX)/2
+            x_middle = int((move.startX + move.endX)/2)
             if chess_board_inst.is_empty(x_middle, move.endY):
                 first_move = Move(move.startX, move.startY, x_middle, move.endY)
                 self.calculate_movement(first_move)
@@ -142,7 +142,7 @@ class Trolley:
                 self.calculate_movement(second_move)
                 return True
         else:
-            y_middle = (move.startY + move.endY)/2
+            y_middle = int((move.startY + move.endY)/2)
             if chess_board_inst.is_empty(move.startX, y_middle):
                 first_move = Move(move.startX, move.startY, move.startX, y_middle)
                 self.calculate_movement(first_move)
