@@ -5,7 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import secrets
 import string
-from lichess_api import launch_game
+from lichess_api import launch_game, is_game_active
 from read_board import init_board_control, lcd_display_key
 from models import GameParams
 
@@ -22,16 +22,12 @@ app.config['LICHESS_CLIENT_ID'] =  os.getenv("LICHESS_CLIENT_ID")
 app.config['LICHESS_AUTHORIZE_URL'] = f"{LICHESS_HOST}/oauth"
 app.config['LICHESS_ACCESS_TOKEN_URL'] = f"{LICHESS_HOST}/api/token"
 lcd_secret = None
-game_in_progress = False
+#game_in_progress = False
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
-
-def game_finished():
-    global game_in_progress
-    game_in_progress = False
     
 def handle_game_start(request):
-    global game_in_progress
+    #global game_in_progress
     
     params = GameParams()
     params.side = request.form['color']
@@ -44,7 +40,7 @@ def handle_game_start(request):
         init_board_control(params.time)
         # Launch lichess game via API
         launch_game(params, user_api_token)
-        game_in_progress = True
+        #game_in_progress = True
         return redirect(url_for('index'))
     else:
         response = jsonify({'error': 'The lichess API token is missing'})
@@ -76,9 +72,6 @@ def auth():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     global lcd_secret
-
-    if game_in_progress:
-        jsonify({'error': 'The game has started already'})
         
     if 'led_token' not in session:
         lcd_secret = generate_random_string()
@@ -89,6 +82,8 @@ def index():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        if is_game_active():
+            return jsonify({'error': 'The game has started already'})
         handle_game_start(request)
 
     colors = ['white', 'black']
