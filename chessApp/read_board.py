@@ -11,6 +11,7 @@ from trolley import *
 previous_move = "a8a8"
 trolley = None
 mylcd = None
+illegal_move = False
 
 def convert_seconds_to_min_sec(seconds: int):
     # Calculate minutes and remaining seconds
@@ -26,6 +27,10 @@ def lcd_init():
 def lcd_display_key(lcd_secret):
     lcd_init()
     mylcd.lcd_display_secret_key(lcd_secret)
+
+def lcd_illegal_move(move):
+    mylcd.lcd_display_string_pos(f"Move {move} is illegal", 1, 1)
+    mylcd.lcd_display_string_pos("Follow the rules Beatch", 3, 1)
     
 def buttons_init():
     # Set the GPIO mode
@@ -34,20 +39,21 @@ def buttons_init():
     GPIO.setup(RPi_I2C_driver.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     
 def lcd_thread(time):
-    global mylcd
+    global mylcd, illegal_move
     mylcd.lcd_clear()
     
     while is_game_active():
-        white_seconds, black_seconds = get_time_left()
-        if not white_seconds:
-            white_seconds = time
-        if not black_seconds:
-            black_seconds = time
+        if not illegal_move:
+            white_seconds, black_seconds = get_time_left()
+            if not white_seconds:
+                white_seconds = time
+            if not black_seconds:
+                black_seconds = time
 
-        white_time = convert_seconds_to_min_sec(white_seconds)
-        black_time = convert_seconds_to_min_sec(black_seconds)
+            white_time = convert_seconds_to_min_sec(white_seconds)
+            black_time = convert_seconds_to_min_sec(black_seconds)
 
-        mylcd.lcd_display_chess_time(white_time, black_time)
+            mylcd.lcd_display_chess_time(white_time, black_time)
         sleep(0.1)
 
     mylcd.lcd_clear()
@@ -58,13 +64,15 @@ def lcd_thread(time):
     GPIO.cleanup()
 
 def main_thread():
-    global previous_move, trolley
+    global previous_move, trolley, illegal_move
     sleep(1)
     while is_game_active():
         
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
             sleep(0.1)
+            
+        illegal_move = False
         user_move = get_user_move()
         feedback = input(f'{user_move} ? ')
         if feedback == 'y':
@@ -77,10 +85,10 @@ def main_thread():
         previous_move = user_move
         if user_move == 'q':
             break
-        #sleep(0.1)
+            
         move_accepted.wait()
         move_accepted.clear()
-
+        
         if is_move_legal():
             chess_board_inst.move_piece_string(user_move)
             bot_move = None
@@ -93,8 +101,10 @@ def main_thread():
             report_bot_move(bot_move)
             trolley.make_move(bot_move)
         else:
+            illegal_move = True
             print(f"Illegal move {user_move}")
-
+            lcd_illegal_move(user_move)
+            
     trolley = None
 
 def init_trolley():

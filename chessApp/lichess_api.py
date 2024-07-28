@@ -137,18 +137,16 @@ def main_thread():
             game_status = handle_game_state_update(update)
             game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
             break
-        #time.sleep(1)
 
-    #time.sleep(3)
-    print("Game Over!")
-    game_not_over = True
+    print(f"Game Over! Status: {game_status}")
     client = None
 
 def launch_game(parameters: GameParams, user_api_token):
-    global move_accepted, move_legal
+    
+    global move_accepted, move_legal, game_not_over, client
     session = berserk.TokenSession(user_api_token)
-    global client
     client = berserk.Client(session=session)
+    game_not_over = True
     send_challenge(parameters)
     stop_threads = False
     thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
