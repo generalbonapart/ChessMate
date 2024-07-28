@@ -63,8 +63,7 @@ def lcd_thread(time):
     mylcd.lcd_display_string_pos(get_game_status(), 2, 5)
     sleep(5)
     mylcd.lcd_clear()
-    mylcd.backlight(0)
-    GPIO.cleanup()
+    mylcd.lcd_display_string("Start new game", 2)
 
 def main_thread():
     global previous_move, trolley, illegal_move
