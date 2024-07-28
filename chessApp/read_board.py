@@ -45,7 +45,7 @@ def lcd_thread(time):
     
     while is_game_active():
         if illegal_move:
-            lcd_illegal_move()
+            lcd_illegal_move(previous_move)
         else:
             white_seconds, black_seconds = get_time_left()
             if not white_seconds:
