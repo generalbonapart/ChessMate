@@ -12,6 +12,10 @@ previous_move = "a8a8"
 trolley = None
 mylcd = None
 illegal_move = False
+main_signal = True
+
+thread1 = None
+thread2 = None
 
 def convert_seconds_to_min_sec(seconds: int):
     # Calculate minutes and remaining seconds
@@ -65,6 +69,9 @@ def lcd_thread(time):
     mylcd.lcd_clear()
     mylcd.lcd_display_string("Start new game", 2)
 
+    while (main_signal):
+        sleep(1)
+        
 def main_thread():
     global previous_move, trolley, illegal_move
     sleep(1)
@@ -111,13 +118,27 @@ def main_thread():
             lcd_illegal_move(user_move)
     
     trolley.take_initial_position()
+    while (main_signal):
+        sleep(1)
 
 def init_trolley():
     global trolley
     if trolley is None:
         trolley = Trolley()
-    
+
+def kill_threads():
+    global thread1, thread2, main_signal
+    main_signal = False
+    if thread1 is not None:
+        if thread1.is_alive():
+            thread1.join()
+    if thread1 is not None:
+        if thread2.is_alive():
+            thread2.join()      
+
 def init_board_control(time):
+    global main_signal
+    kill_threads()
     lcd_init()
     buttons_init()
     init_trolley()
@@ -125,6 +146,7 @@ def init_board_control(time):
     thread2 = threading.Thread(target=lcd_thread, args=(time, ))
     thread1.start()
     thread2.start()
+    main_signal = True
     board_detection_init()
 
 
