@@ -151,7 +151,7 @@ def find_piece_movement(previous_state, current_state):
     differences = compare_board_state(previous_state, current_state)
 
     if len(differences) == 0:
-        return 'a8a8', previous_state
+        return 'q', previous_state
 
     # For piece movement or piece capture
     elif len(differences) == 2:
