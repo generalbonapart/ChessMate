@@ -30,8 +30,8 @@ def lcd_display_key(lcd_secret):
 
 def lcd_illegal_move(move):
     mylcd.lcd_clear()
-    mylcd.lcd_display_string_pos(f"Move {move} is illegal", 1, 1)
-    mylcd.lcd_display_string_pos("Follow the rules Beatch", 3, 1)
+    mylcd.lcd_display_string(f"{move} is illegal", 1)
+    mylcd.lcd_display_string("Make a new move", 3)
     
 def buttons_init():
     # Set the GPIO mode
@@ -44,7 +44,9 @@ def lcd_thread(time):
     mylcd.lcd_clear()
     
     while is_game_active():
-        if not illegal_move:
+        if illegal_move:
+            lcd_illegal_move()
+        else:
             white_seconds, black_seconds = get_time_left()
             if not white_seconds:
                 white_seconds = time
