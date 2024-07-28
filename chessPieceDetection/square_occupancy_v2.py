@@ -20,17 +20,14 @@ def capture_image():
     # Load the image
     image_raw = cv2.imread(IMAGE)
     assert image_raw is not None, "Image not found"
-    scale_percent = 50  # percent of original size
+    scale_percent = 30  # percent of original size
     width = int(image_raw.shape[1] * scale_percent / 100)
     height = int(image_raw.shape[0] * scale_percent / 100)
     dim = (width, height)
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
-    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    M = cv2.getPerspectiveTransform(pts1,pts2)
-    return cv2.warpPerspective(img,M,(800,800))
+    return img
 
 def square_occupancy_init():
     global board_state
@@ -74,12 +71,12 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([50, 30, 0])
-    upper_black = np.array([115, 100, 80])
+    lower_black = np.array([80, 30, 0])
+    upper_black = np.array([120, 100, 80])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([30, 15, 145])
-    upper_white = np.array([90, 80, 230])
+    lower_white = np.array([20, 15, 145])
+    upper_white = np.array([100, 95, 230])
 
     # Create masks for black and white pieces
     mask_black = cv2.inRange(hsv, lower_black, upper_black)
@@ -145,7 +142,10 @@ def find_piece_movement(previous_state, current_state):
     differences = compare_board_state(previous_state, current_state)
     print(f"The length of differences: {len(differences)}")
     # For piece movement or piece capture
-    if len(differences) == 2:
+    if len(differences) == 0:
+        return None, previous_state
+
+    elif len(differences) == 2:
         start_pos = None
         end_pos = None
         start_piece = None
@@ -176,7 +176,7 @@ def find_piece_movement(previous_state, current_state):
             return move, current_state
 
     # Castling detection
-    if len(difference) == 4:
+    elif len(differences) == 4:
         king_start_pos = (7, 4)
         kingside_rook_start_pos = (7, 7)
         queenside_rook_start_pos = (7, 0)
@@ -192,7 +192,8 @@ def find_piece_movement(previous_state, current_state):
                 return move, current_state
 
     print("Error: Unable to detect a valid move.")
-    return None
+
+    return None, previous_state
 
 def get_user_move():
     global board_state
@@ -207,23 +208,18 @@ def get_user_move():
     # Detect current square occupation
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
 
-    if new_board_state is None:
-        print("Error: Unable to detect board state.")
-    else:
-        move, new_board_state = find_piece_movement(board_state, new_board_state)
-
-        if move or board_state is None: 
-            print("Error: Unable to detect a valid move.")
-        else:
-            board_state = new_board_state
-            for row in board_state:
-                print(row)
+    for row in new_board_state:
+        print(row)
 
     cv2.imshow('Chessboard image', chessboard_image)
-    #cv2.imshow('White Mask', mask_white)
-    #cv2.imshow('Black Mask', mask_black)
+    cv2.imshow('White Mask', mask_white)
+    cv2.imshow('Black Mask', mask_black)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    move, new_board_state = find_piece_movement(board_state, new_board_state)
+    board_state = new_board_state
+
 
 if __name__ == "__main__":
     square_occupancy_init()
