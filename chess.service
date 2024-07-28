@@ -1,0 +1,13 @@
+[Unit]
+Description=ChessMate application
+After=network.target
+
+[Service]
+User=automate
+WorkingDirectory=/home/automate/ChessMate/chessApp
+ExecStart=/home/automate/ChessMate/venv/bin/python app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

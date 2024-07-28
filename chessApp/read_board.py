@@ -62,11 +62,16 @@ def main_thread():
     sleep(1)
     while is_game_active():
         
-        #user_move = get_user_move()
-        user_move = input("User move: ")
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
             sleep(0.1)
+        user_move = get_user_move()
+        feedback = input(f'{user_move} ? ')
+        if feedback == 'y':
+            pass
+        else:
+            user_move = feedback
+        #user_move = input("User move: ")
 
         add_user_move(user_move)
         previous_move = user_move
@@ -85,7 +90,7 @@ def main_thread():
                 
             previous_move = bot_move
             print("Bot's move: ", bot_move)
-            #report_bot_move(bot_move)
+            report_bot_move(bot_move)
             trolley.make_move(bot_move)
         else:
             print(f"Illegal move {user_move}")

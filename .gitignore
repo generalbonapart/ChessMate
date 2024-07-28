@@ -2,3 +2,5 @@ chessPieceMovement/pigpio-master
 ChessMate.code-workspace
 *.pyc
 */build/
+venv/
+.venv/
