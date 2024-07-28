@@ -9,7 +9,6 @@ from lichess_api import launch_game
 from read_board import init_board_control, lcd_display_key
 from models import GameParams
 
-
 def generate_random_string(length=8):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
@@ -27,6 +26,10 @@ game_in_progress = False
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
 
+def game_finished():
+    global game_in_progress
+    game_in_progress = False
+    
 def handle_game_start(request):
     global game_in_progress
     
@@ -42,13 +45,12 @@ def handle_game_start(request):
         # Launch lichess game via API
         launch_game(params, user_api_token)
         game_in_progress = True
+        return redirect(url_for('index'))
     else:
         response = jsonify({'error': 'The lichess API token is missing'})
         response.status_code = 401
         return response
-    
-    
-        
+         
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -75,6 +77,9 @@ def auth():
 def index():
     global lcd_secret
 
+    if game_in_progress:
+        jsonify({'error': 'The game has started already'})
+        
     if 'led_token' not in session:
         lcd_secret = generate_random_string()
         print(lcd_secret)

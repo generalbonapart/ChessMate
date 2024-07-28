@@ -2,6 +2,7 @@ import threading
 from time import sleep
 import RPi_I2C_driver
 from RPi import GPIO
+from app import game_finished
 from lichess_api import add_user_move, get_bot_move, is_game_active, get_game_status, move_accepted, is_move_legal, get_time_left
 from board_detection import board_detection_init, get_user_move, report_bot_move
 from chess_board import *
@@ -110,8 +111,9 @@ def main_thread():
             illegal_move = True
             print(f"Illegal move {user_move}")
             lcd_illegal_move(user_move)
-            
+    
     trolley = None
+    game_finished()
 
 def init_trolley():
     global trolley
