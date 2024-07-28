@@ -20,17 +20,14 @@ def capture_image():
     # Load the image
     image_raw = cv2.imread(IMAGE)
     assert image_raw is not None, "Image not found"
-    scale_percent = 50  # percent of original size
+    scale_percent = 30  # percent of original size
     width = int(image_raw.shape[1] * scale_percent / 100)
     height = int(image_raw.shape[0] * scale_percent / 100)
     dim = (width, height)
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
-    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    M = cv2.getPerspectiveTransform(pts1,pts2)
-    return cv2.warpPerspective(img,M,(800,800))
+    return img
 
 def square_occupancy_init():
     global board_state
@@ -74,7 +71,7 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([50, 30, 0])
+    lower_black = np.array([90, 30, 15])
     upper_black = np.array([115, 100, 80])
 
     # Define color range for white pieces (these ranges might need adjustment)
@@ -93,6 +90,7 @@ def is_point_in_square(point, square):
     return top_left[0] <= x <= top_right[0] and top_left[1] <= y <= bottom_left[1]
 
 def detect_square_occupation(image, mask_white, mask_black, squares):
+    global board_state
     contours_white, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     min_width = 10
@@ -115,18 +113,9 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                 if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
                     square_occupied = 1 # White piece
                     break
-
-        # Check for black pieces if white piece wasn't found
-        if square_occupied == 0:
-            for contour in contours_black:
-                x, y, w, h = cv2.boundingRect(contour)
-                if w >= min_width and h >= min_height:
-                    bottom_left_corner = (x, y + h)
-                    bottom_right_corner = (x + w, y + h)
-
-                    if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
-                        square_occupied = 2 # Black piece
-                        break
+         # Copy black pieces from the previous board state to the game state
+        if board_state[row][col] == 2:
+            square_occupied = 2
 
         game_state[row][col] = square_occupied
 
@@ -144,6 +133,7 @@ def find_piece_movement(previous_state, current_state):
 
     differences = compare_board_state(previous_state, current_state)
     print(f"The length of differences: {len(differences)}")
+    print(f"Moves registered: {differences}")
     # For piece movement or piece capture
     if len(differences) == 2:
         start_pos = None
@@ -176,7 +166,7 @@ def find_piece_movement(previous_state, current_state):
             return move, current_state
 
     # Castling detection
-    if len(differences) == 4:
+    elif len(differences) == 4:
         king_start_pos = (7, 4)
         kingside_rook_start_pos = (7, 7)
         queenside_rook_start_pos = (7, 0)
@@ -206,6 +196,12 @@ def get_user_move():
 
     # Detect current square occupation
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
+    for row in new_board_state:
+        print(row)
+    cv2.imshow('Chessboard image', chessboard_image)
+    cv2.imshow('White Mask', mask_white)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     if new_board_state is None:
         print("Error: Unable to detect board state.")
@@ -219,11 +215,6 @@ def get_user_move():
             for row in board_state:
                 print(row)
 
-    cv2.imshow('Chessboard image', chessboard_image)
-    #cv2.imshow('White Mask', mask_white)
-    #cv2.imshow('Black Mask', mask_black)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     square_occupancy_init()

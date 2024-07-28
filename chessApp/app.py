@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import secrets
 import string
 from lichess_api import launch_game
-from read_board import init_board_control, lcd_init
+from read_board import init_board_control, lcd_init, lcd_display_key
 from models import GameParams
 
 
@@ -78,7 +78,7 @@ def index():
     if 'led_token' not in session:
         lcd_secret = generate_random_string()
         print(lcd_secret)
-        lcd_init(lcd_secret)
+        lcd_display_key(lcd_secret)
         return redirect(url_for('auth'))
     if 'lichess_token' not in session:
         return redirect(url_for('login'))

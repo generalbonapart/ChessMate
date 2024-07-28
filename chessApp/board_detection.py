@@ -20,7 +20,7 @@ def capture_image():
     # Load the image
     image_raw = cv2.imread(IMAGE)
     assert image_raw is not None, "Image not found"
-    scale_percent = 50  # percent of original size
+    scale_percent = 30  # percent of original size
     width = int(image_raw.shape[1] * scale_percent / 100)
     height = int(image_raw.shape[0] * scale_percent / 100)
     dim = (width, height)
@@ -75,7 +75,7 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([50, 30, 0])
+    lower_black = np.array([95, 30, 15])
     upper_black = np.array([115, 100, 80])
 
     # Define color range for white pieces (these ranges might need adjustment)
@@ -100,7 +100,6 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
     min_height = 10
     game_state = [[0 for _ in range(8)] for _ in range(8)]
 
-    # Iterate through each square
     for idx, square in enumerate(squares):
         row = 7 - (idx // 8)  # Calculate row index (0 to 7)
         col = idx % 8   # Calculate column index (0 to 7)
@@ -109,6 +108,10 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
         #check for white pieces
         for contour in contours_white:
             x, y, w, h = cv2.boundingRect(contour)
+
+            if board_state[row][col] == 2:
+                square_occupied = 2
+
             if w >= min_width and h >= min_height:
                 bottom_left_corner = (x, y + h)
                 bottom_right_corner = (x + w, y + h)
@@ -128,6 +131,8 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
         #             if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
         #                 square_occupied = 2 # Black piece
         #                 break
+        # Copy black pieces from the previous board state to the game state
+        # Copy black pieces from the previous board state to the game state
 
         game_state[row][col] = square_occupied
 
@@ -202,16 +207,15 @@ def get_user_move():
 
     # Detect current square occupation
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
+    for row in new_board_state:
+        print(row)
 
-    if new_board_state is None:
-        print("Error: Unable to detect board state.")
+    move, new_board_state = find_piece_movement(board_state, new_board_state)
+
+    if move is  None: 
+        print("Error: Unable to detect a valid move.")
     else:
-        move, new_board_state = find_piece_movement(board_state, new_board_state)
-
-        if move or board_state is None: 
-            print("Error: Unable to detect a valid move.")
-        else:
-            board_state = new_board_state
+        board_state = new_board_state
             
     return move
                 

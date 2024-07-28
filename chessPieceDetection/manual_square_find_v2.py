@@ -23,24 +23,14 @@ def capture_image():
     # Load the image
     image_raw = cv2.imread(IMAGE)
     assert image_raw is not None, "Image not found"
-    scale_percent = 50  # percent of original size
+    scale_percent = 30  # percent of original size
     width = int(image_raw.shape[1] * scale_percent / 100)
     height = int(image_raw.shape[0] * scale_percent / 100)
     dim = (width, height)
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
-    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    M = cv2.getPerspectiveTransform(pts1,pts2)
-    return cv2.warpPerspective(img,M,(800,800))
-
-"""
-    pts1 = np.float32([[300, 154], [595, 145], [113, 454], [764, 441]])
-    pts2 = np.float32([[0, 0], [800, 0], [0, 800], [800, 800]])
-    M = cv2.getPerspectiveTransform(pts1, pts2)
-    return cv2.warpPerspective(img, M, (800, 800))
-"""
+    return img
 
 # Mouse callback function to capture click events
 def click_event(event, x, y, flags, params):
