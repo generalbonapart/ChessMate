@@ -29,6 +29,7 @@ def lcd_display_key(lcd_secret):
     mylcd.lcd_display_secret_key(lcd_secret)
 
 def lcd_illegal_move(move):
+    mylcd.lcd_clear()
     mylcd.lcd_display_string_pos(f"Move {move} is illegal", 1, 1)
     mylcd.lcd_display_string_pos("Follow the rules Beatch", 3, 1)
     
@@ -71,8 +72,11 @@ def main_thread():
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
             sleep(0.1)
+        
+        if illegal_move:
+            illegal_move = False
+            mylcd.lcd_clear()
             
-        illegal_move = False
         user_move = get_user_move()
         feedback = input(f'{user_move} ? ')
         if feedback == 'y':
