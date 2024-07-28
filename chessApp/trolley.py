@@ -44,7 +44,7 @@ class Trolley:
         self.loaded_speed = loaded_speed
         self.loaded_acceleration = loaded_acceleration
         self.currentX = 0
-        self.currentY = 0
+        self.currentY = 7
         self.stallguard_threshold_1 = 250
         self.stallguard_threshold_2 = 250
         self.castling = None
