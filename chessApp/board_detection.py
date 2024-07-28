@@ -79,7 +79,7 @@ def get_combined_mask(image):
     upper_black = np.array([120, 100, 60])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([20, 15, 145])
+    lower_white = np.array([30, 15, 145])
     upper_white = np.array([100, 95, 230])
 
     # Create masks for black and white pieces
@@ -213,7 +213,6 @@ def get_user_move():
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
     for row in new_board_state:
         print(row)
-
     move, new_board_state = find_piece_movement(board_state, new_board_state)
 
     if move is  None: 
