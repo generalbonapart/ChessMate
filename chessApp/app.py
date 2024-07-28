@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import secrets
 import string
 from lichess_api import launch_game
-from read_board import init_board_control, lcd_init, lcd_display_key
+from read_board import init_board_control, lcd_display_key
 from models import GameParams
 
 

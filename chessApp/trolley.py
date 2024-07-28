@@ -67,15 +67,17 @@ class Trolley:
             tmc.set_microstepping_resolution(2)
             tmc.set_internal_rsense(False)
             tmc.set_motor_enabled(True)
-            tmc.set_acceleration(self.free_acceleration)
-            tmc.set_max_speed(self.free_speed)
             
         self.move_to_chess_origin()
 
     def move_to_chess_origin(self):
         
+        for tmc in [self.tmc1, self.tmc2]:
+            tmc.set_acceleration(self.free_acceleration)
+            tmc.set_max_speed(self.free_speed)
+            
         #Find one edge
-        self.move_in_direction(0.5, "DUPR")
+        self.move_in_direction(1, "DUPR")
         self.tmc2.run_to_position_steps_threaded(-10000, MovementAbsRel.RELATIVE)
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
         self.tmc2.stop()
@@ -300,6 +302,9 @@ class Trolley:
         GPIO.output(MAGNET_PIN, GPIO.LOW)
 
     def __del__(self):
+        free_move = Move(self.currentX, self.currentY, 0, 0)
+        self.set_speed_acceleration(loaded=False)
+        self.calculate_movement(free_move)
         GPIO.cleanup(MAGNET_PIN)
 
 
