@@ -14,7 +14,7 @@ def patched_json(self, **kwargs):
 Response.json = patched_json
 
 URL = 'https://lichess.org/'
-game_not_over = True
+game_not_over = False
 game_status = ''
 user_move = None
 game_id = None
