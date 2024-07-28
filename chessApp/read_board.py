@@ -111,11 +111,12 @@ def main_thread():
             print(f"Illegal move {user_move}")
             lcd_illegal_move(user_move)
     
-    trolley = None
+    trolley.take_initial_position()
 
 def init_trolley():
     global trolley
-    trolley = Trolley()
+    if trolley is None:
+        trolley = Trolley()
     
 def init_board_control(time):
     lcd_init()

@@ -69,6 +69,7 @@ class Trolley:
             tmc.set_motor_enabled(True)
             
         self.move_to_chess_origin()
+        self.take_initial_position()
 
     def move_to_chess_origin(self):
         
@@ -278,6 +279,13 @@ class Trolley:
             print(self.castling)
             self.make_move(self.castling[2], rook_castling = True)
 
+    def take_initial_position(self):
+        free_move = Move(self.currentX, self.currentY, 3, 7)
+        self.set_speed_acceleration(loaded=False)
+        self.calculate_movement(free_move)
+        self.currentX = 3
+        self.currentY = 7
+        
     def demo_test(self):
         # Prompt the user for a direction
         while(True):
