@@ -44,7 +44,7 @@ class Trolley:
         self.loaded_speed = loaded_speed
         self.loaded_acceleration = loaded_acceleration
         self.currentX = 0
-        self.currentY = 7
+        self.currentY = 0
         self.stallguard_threshold_1 = 250
         self.stallguard_threshold_2 = 250
         self.castling = None
@@ -78,14 +78,14 @@ class Trolley:
             tmc.set_max_speed(self.free_speed)
             
         #Find one edge
-        self.move_in_direction(1, "DDOWNR")
-        self.tmc2.run_to_position_steps_threaded(10000, MovementAbsRel.RELATIVE)
+        self.move_in_direction(1, "DUPR")
+        self.tmc2.run_to_position_steps_threaded(-10000, MovementAbsRel.RELATIVE)
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
         self.tmc2.stop()
         self.tmc2.set_motor_enabled(False)
         
         # Find the physical origin
-        self.tmc1.take_me_home(threshold=self.stallguard_threshold_2, direction= Direction.CW)
+        self.tmc1.take_me_home(threshold=self.stallguard_threshold_2)
         self.tmc2.set_motor_enabled(True)
         
         # Move to chess origin
