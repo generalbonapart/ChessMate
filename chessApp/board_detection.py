@@ -75,12 +75,12 @@ def get_combined_mask(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([95, 30, 15])
-    upper_black = np.array([115, 100, 80])
+    lower_black = np.array([80, 30, 0])
+    upper_black = np.array([120, 100, 60])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([30, 15, 145])
-    upper_white = np.array([90, 80, 230])
+    lower_white = np.array([20, 15, 145])
+    upper_white = np.array([100, 95, 230])
 
     # Create masks for black and white pieces
     mask_black = cv2.inRange(hsv, lower_black, upper_black)
@@ -149,8 +149,12 @@ def compare_board_state(previous_state, current_state):
 def find_piece_movement(previous_state, current_state):
 
     differences = compare_board_state(previous_state, current_state)
+
+    if len(differences) == 0:
+        return 'a8a8', previous_state
+
     # For piece movement or piece capture
-    if len(differences) == 2:
+    elif len(differences) == 2:
         start_pos = None
         end_pos = None
         start_piece = None
@@ -177,7 +181,7 @@ def find_piece_movement(previous_state, current_state):
             return move, current_state
 
     # Castling detection
-    if len(differences) == 4:
+    elif len(differences) == 4:
         king_start_pos = (7, 4)
         kingside_rook_start_pos = (7, 7)
         queenside_rook_start_pos = (7, 0)
@@ -193,7 +197,7 @@ def find_piece_movement(previous_state, current_state):
                 return move, current_state
 
     print("Error: Unable to detect a valid move.")
-    return 'a8a8', current_state
+    return 'a8a8', previous_state
 
 def get_user_move():
     global board_state
