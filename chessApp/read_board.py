@@ -171,7 +171,7 @@ def init_board_control(time, level):
     buttons_init()
     init_trolley()
     thread1 = threading.Thread(target=main_thread)
-    thread2 = threading.Thread(target=lcd_thread, args=(time, ))
+    thread2 = threading.Thread(target=lcd_thread, args=(time, level))
     thread1.start()
     thread2.start()
     main_signal = True
