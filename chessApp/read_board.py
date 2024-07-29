@@ -46,11 +46,15 @@ def buttons_init():
 def lcd_thread(time):
     global mylcd, illegal_move
     mylcd.lcd_clear()
-    
+    clear_once = 1
     while is_game_active():
         if illegal_move:
+            if clear_once:
+                mylcd.lcd_clear()
+                clear_once = 0
             lcd_illegal_move(previous_move)
         else:
+            clear_once = 1
             white_seconds, black_seconds = get_time_left()
             if not white_seconds:
                 white_seconds = time
@@ -116,7 +120,7 @@ def main_thread():
             report_illegal_move()
             illegal_move = True
             print(f"Illegal move {user_move}")
-            lcd_illegal_move(user_move)
+            #lcd_illegal_move(user_move)
     
     trolley.take_initial_position()
     while (main_signal):

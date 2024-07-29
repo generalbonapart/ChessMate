@@ -26,6 +26,7 @@ game_state = None
 
 thread_post_moves = None
 thread_main_game = None
+main_signal = True
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -163,7 +164,7 @@ def kill_threads():
     
 def launch_game(parameters: GameParams, user_api_token):
     
-    global move_accepted, move_legal, game_not_over, client, session, thread_main_game, thread_post_moves
+    global move_accepted, move_legal, game_not_over, client, session, thread_main_game, thread_post_moves, main_signal
     
     if session is None:
         session = berserk.TokenSession(user_api_token)
@@ -176,6 +177,7 @@ def launch_game(parameters: GameParams, user_api_token):
     thread_main_game = threading.Thread(target=main_thread)
     #move_accepted = threading.Event()
     
+    main_signal = True
     print("Starting game")
     thread_post_moves.start()
     thread_main_game.start()
