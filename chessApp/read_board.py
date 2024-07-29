@@ -27,9 +27,22 @@ def convert_seconds_to_min_sec(seconds: int):
 
 def lcd_init():
     global mylcd
+    print('Initialising the LCD')
     if mylcd is None:
         mylcd = RPi_I2C_driver.lcd()
-   
+    
+def buttons_init():
+    print('Initialising the button')
+    # Set the GPIO mode
+    GPIO.setmode(GPIO.BCM)
+    # Set up the button pin as an input with a pull-up resistor
+    GPIO.setup(RPi_I2C_driver.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(DOME_BUTTON_LED, GPIO.OUT)
+
+def lcd_start_message(level):
+    mylcd.lcd_display_string_pos(f"Game set", 1, 5)
+    mylcd.lcd_display_string_pos(f"Level {level}", 3, 5)
+    
 def lcd_display_key(lcd_secret):
     lcd_init()
     mylcd.lcd_display_secret_key(lcd_secret)
@@ -42,19 +55,13 @@ def button_led_ON():
     GPIO.output(DOME_BUTTON_LED, GPIO.HIGH)
 
 def button_led_OFF():
-    GPIO.output(DOME_BUTTON_LED, GPIO.LOW)
+    GPIO.output(DOME_BUTTON_LED, GPIO.LOW) 
     
-def buttons_init():
-    # Set the GPIO mode
-    GPIO.setmode(GPIO.BCM)
-    # Set up the button pin as an input with a pull-up resistor
-    GPIO.setup(RPi_I2C_driver.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(DOME_BUTTON_LED, GPIO.OUT) 
-    
-def lcd_thread(time):
+def lcd_thread(time, level):
     global mylcd, illegal_move
     mylcd.lcd_clear()
     clear_once = 1
+    lcd_start_message(level)
     while is_game_active():
         if illegal_move:
             if clear_once:
@@ -135,6 +142,7 @@ def main_thread():
             print(f"Illegal move {user_move}")
             #lcd_illegal_move(user_move)
     
+    illegal_move = False
     trolley.take_initial_position()
     while (main_signal):
         sleep(1)
@@ -156,7 +164,7 @@ def kill_threads():
     
     print("Killed board threads")  
 
-def init_board_control(time):
+def init_board_control(time, level):
     global main_signal, thread1, thread2
     kill_threads()
     lcd_init()
