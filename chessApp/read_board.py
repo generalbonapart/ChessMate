@@ -3,7 +3,7 @@ from time import sleep
 import RPi_I2C_driver
 from RPi import GPIO
 from lichess_api import add_user_move, get_bot_move, is_game_active, get_game_status, move_accepted, is_move_legal, get_time_left
-from board_detection import board_detection_init, get_user_move, report_bot_move
+from board_detection import board_detection_init, get_user_move, report_bot_move, report_illegal_move
 from chess_board import *
 from models import GameParams
 from trolley import *
@@ -113,6 +113,7 @@ def main_thread():
             report_bot_move(bot_move)
             trolley.make_move(bot_move)
         else:
+            report_illegal_move()
             illegal_move = True
             print(f"Illegal move {user_move}")
             lcd_illegal_move(user_move)

@@ -10,6 +10,7 @@ IMAGE = 'cv/board.jpg'
 CURDIR = os.getcwd()
 OUTPUT_FILE = os.path.join(CURDIR, IMAGE)
 points_file = 'cv/points.json'
+previous_board_state = None
 
 def capture_image():
     command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
@@ -148,12 +149,12 @@ def compare_board_state(previous_state, current_state):
                 differences.append((row, col, previous_state[row][col], current_state[row][col]))
     return differences
 
-def find_piece_movement(previous_state, current_state):
-
-    differences = compare_board_state(previous_state, current_state)
+def find_piece_movement(new_board_state):
+    global board_state
+    differences = compare_board_state(board_state, new_board_state)
 
     if len(differences) == 0:
-        return 'q', previous_state
+        return 'q', board_state
 
     # For piece movement or piece capture
     elif len(differences) == 2:
@@ -180,7 +181,7 @@ def find_piece_movement(previous_state, current_state):
 
             # Print the piece type
             piece_type = "White" if start_piece == 1 else "Black"
-            return move, current_state
+            return move, new_board_state
 
     # Castling detection
     elif len(differences) == 4:
@@ -193,16 +194,16 @@ def find_piece_movement(previous_state, current_state):
         if king_start_pos in start_positions and any(rook_start_pos in start_positions for rook_start_pos in [kingside_rook_start_pos, queenside_rook_start_pos]):
             if (7, 6) in end_positions and (7, 5) in end_positions:  # Kingside castling
                 move = 'e1g1'
-                return move, current_state
+                return move, new_board_state
             elif (7, 2) in end_positions and (7, 3) in end_positions:  # Queenside castling
                 move = 'e1c1'
-                return move, current_state
+                return move, new_board_state
 
     print("Error: Unable to detect a valid move.")
-    return 'a8a8', previous_state
+    return 'a8a8', board_state
 
 def get_user_move():
-    global board_state
+    global board_state, previous_board_state
     # Capture and process the current chessboard image
     chessboard_image = capture_image()
     
@@ -215,11 +216,12 @@ def get_user_move():
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
     for row in new_board_state:
         print(row)
-    move, new_board_state = find_piece_movement(board_state, new_board_state)
+    move, new_board_state = find_piece_movement(new_board_state)
 
     if move is  None: 
         print("Error: Unable to detect a valid move.")
     else:
+        previous_board_state = board_state
         board_state = new_board_state
             
     return move
@@ -227,6 +229,10 @@ def get_user_move():
 def board_detection_init():
     square_occupancy_init()
 
+def report_illegal_move():
+    global board_state, previous_board_state
+    board_state = previous_board_state
+    
 def report_bot_move(move):
     global board_state
     start = move[0:2]
