@@ -37,7 +37,7 @@ def handle_game_start(request):
     
     user_api_token = session.get('lichess_token')
     if user_api_token:
-        init_board_control(params.time)
+        init_board_control(params.time, params.level)
         # Launch lichess game via API
         launch_game(params, user_api_token)
         #game_in_progress = True
