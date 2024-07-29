@@ -62,6 +62,7 @@ def lcd_thread(time, level):
     mylcd.lcd_clear()
     clear_once = 1
     lcd_start_message(level)
+    sleep(3)
     while is_game_active():
         if illegal_move:
             if clear_once:
@@ -93,7 +94,7 @@ def lcd_thread(time, level):
         
 def main_thread():
     global previous_move, trolley, illegal_move
-    sleep(1)
+    sleep(3)
     while is_game_active():
         
         # Light the button for user
@@ -147,7 +148,7 @@ def main_thread():
     while (main_signal):
         sleep(1)
 
-def init_trolley():
+def trolley_init():
     global trolley
     if trolley is None:
         trolley = Trolley()
@@ -169,13 +170,14 @@ def init_board_control(time, level):
     kill_threads()
     lcd_init()
     buttons_init()
-    init_trolley()
+    trolley_init()
+    board_detection_init()
     thread1 = threading.Thread(target=main_thread)
     thread2 = threading.Thread(target=lcd_thread, args=(time, level))
     thread1.start()
     thread2.start()
     main_signal = True
-    board_detection_init()
+    
 
 
 if __name__ == "__main__":
