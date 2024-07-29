@@ -19,9 +19,13 @@ game_status = ''
 user_move = None
 game_id = None
 client = None
+session = None
 move_accepted = threading.Event()
 move_legal = False
 game_state = None
+
+thread_post_moves = None
+thread_main_game = None
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -127,7 +131,9 @@ def post_user_moves(stop_threads):
                 user_move = None
                 break
         #time.sleep(3)
-
+    while (main_signal):
+        time.sleep(1)
+        
 def main_thread():
     global client, game_not_over, game_status, game_state
     while game_not_over:
@@ -140,12 +146,29 @@ def main_thread():
 
     print(f"Game Over! Status: {game_status}")
     client = None
+    while (main_signal):
+        time.sleep(1)
 
+def kill_threads():
+    global thread_main_game, thread_post_moves, main_signal
+    main_signal = False
+    if thread_main_game is not None:
+        if thread_main_game.is_alive():
+            thread_main_game.join()
+    if thread_post_moves is not None:
+        if thread_post_moves.is_alive():
+            thread_post_moves.join()    
+    
+    print("Killed lichess threads") 
+    
 def launch_game(parameters: GameParams, user_api_token):
     
-    global move_accepted, move_legal, game_not_over, client
-    session = berserk.TokenSession(user_api_token)
-    client = berserk.Client(session=session)
+    global move_accepted, move_legal, game_not_over, client, session, thread_main_game, thread_post_moves
+    
+    if session is None:
+        session = berserk.TokenSession(user_api_token)
+    if client is None:
+        client = berserk.Client(session=session)
     game_not_over = True
     send_challenge(parameters)
     stop_threads = False

@@ -132,12 +132,14 @@ def kill_threads():
     if thread1 is not None:
         if thread1.is_alive():
             thread1.join()
-    if thread1 is not None:
+    if thread2 is not None:
         if thread2.is_alive():
-            thread2.join()      
+            thread2.join()    
+    
+    print("Killed board threads")  
 
 def init_board_control(time):
-    global main_signal
+    global main_signal, thread1, thread2
     kill_threads()
     lcd_init()
     buttons_init()
