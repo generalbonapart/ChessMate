@@ -73,14 +73,16 @@ def find_squares(points, row_count, col_count):
 def get_combined_mask(image):
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    hsv[:, :, 2] = clahe.apply(hsv[:, :, 2])
 
     # Define color range for black pieces (these ranges might need adjustment)
     lower_black = np.array([80, 30, 0])
     upper_black = np.array([120, 100, 60])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([30, 15, 145])
-    upper_white = np.array([100, 95, 230])
+    lower_white = np.array([20, 15, 145])
+    upper_white = np.array([100, 95, 250])
 
     # Create masks for black and white pieces
     mask_black = cv2.inRange(hsv, lower_black, upper_black)
