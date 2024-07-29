@@ -17,6 +17,8 @@ main_signal = True
 thread1 = None
 thread2 = None
 
+DOME_BUTTON_LED = 22
+
 def convert_seconds_to_min_sec(seconds: int):
     # Calculate minutes and remaining seconds
     minutes, sec = divmod(seconds, 60)
@@ -27,7 +29,7 @@ def lcd_init():
     global mylcd
     if mylcd is None:
         mylcd = RPi_I2C_driver.lcd()
-    
+   
 def lcd_display_key(lcd_secret):
     lcd_init()
     mylcd.lcd_display_secret_key(lcd_secret)
@@ -35,12 +37,19 @@ def lcd_display_key(lcd_secret):
 def lcd_illegal_move(move):
     mylcd.lcd_display_string(f"{move} is illegal", 1)
     mylcd.lcd_display_string("Make a new move", 3)
+  
+def button_led_ON():
+    GPIO.output(DOME_BUTTON_LED, GPIO.HIGH)
+
+def button_led_OFF():
+    GPIO.output(DOME_BUTTON_LED, GPIO.LOW)
     
 def buttons_init():
     # Set the GPIO mode
     GPIO.setmode(GPIO.BCM)
     # Set up the button pin as an input with a pull-up resistor
     GPIO.setup(RPi_I2C_driver.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(DOME_BUTTON_LED, GPIO.OUT) 
     
 def lcd_thread(time):
     global mylcd, illegal_move
@@ -80,9 +89,14 @@ def main_thread():
     sleep(1)
     while is_game_active():
         
+        # Light the button for user
+        button_led_ON()
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
             sleep(0.1)
+        
+        # Stop the button light for user
+        button_led_OFF()
         
         if illegal_move:
             illegal_move = False
