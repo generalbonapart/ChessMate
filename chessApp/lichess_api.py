@@ -165,7 +165,7 @@ def kill_threads():
 def launch_game(parameters: GameParams, user_api_token):
     
     global move_accepted, move_legal, game_not_over, client, session, thread_main_game, thread_post_moves, main_signal
-    
+    kill_threads()
     if session is None:
         session = berserk.TokenSession(user_api_token)
     if client is None:
