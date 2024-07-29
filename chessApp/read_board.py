@@ -33,7 +33,6 @@ def lcd_display_key(lcd_secret):
     mylcd.lcd_display_secret_key(lcd_secret)
 
 def lcd_illegal_move(move):
-    mylcd.lcd_clear()
     mylcd.lcd_display_string(f"{move} is illegal", 1)
     mylcd.lcd_display_string("Make a new move", 3)
     
@@ -90,11 +89,11 @@ def main_thread():
             mylcd.lcd_clear()
             
         user_move = get_user_move()
-        # feedback = input(f'{user_move} ? ')
-        # if feedback == 'y':
-        #     pass
-        # else:
-        #     user_move = feedback
+        feedback = input(f'{user_move} ? ')
+        if feedback == 'y':
+            pass
+        else:
+            user_move = feedback
         #user_move = input("User move: ")
 
         add_user_move(user_move)
