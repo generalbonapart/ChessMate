@@ -21,6 +21,7 @@ game_id = None
 client = None
 session = None
 move_accepted = threading.Event()
+move_done = threading.Semaphore(0)
 move_legal = False
 game_state = None
 
@@ -93,6 +94,7 @@ def get_game_status():
 def add_user_move(move):
     global user_move
     user_move = move
+    move_done.release()
 
 def is_game_active():
     return game_not_over
@@ -109,15 +111,14 @@ def is_my_turn(update):
     return False
 
 # Function to post user moves
-def post_user_moves(stop_threads):
+def post_user_moves():
     global game_not_over, user_move, move_accepted, move_legal
     while game_not_over:
-        if stop_threads():
-            break
         for update in client.board.stream_incoming_events():
             if is_my_turn(update) and game_not_over:
-                while not user_move:
-                    time.sleep(0.01)
+                move_done.acquire(timeout=3)
+                if not game_not_over:
+                    break
                 if user_move == 'q':
                     resign_game()
                     game_not_over = False
@@ -172,8 +173,7 @@ def launch_game(parameters: GameParams, user_api_token):
         client = berserk.Client(session=session)
     game_not_over = True
     send_challenge(parameters)
-    stop_threads = False
-    thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
+    thread_post_moves = threading.Thread(target=post_user_moves)
     thread_main_game = threading.Thread(target=main_thread)
     #move_accepted = threading.Event()
     
