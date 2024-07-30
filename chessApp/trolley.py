@@ -89,7 +89,7 @@ class Trolley:
         self.tmc2.set_motor_enabled(True)
         
         # Move to chess origin
-        self.move_in_direction(0.6, "XLEFT")
+        self.move_in_direction(0.75, "XLEFT")
 
     def move_in_direction(self, inc, direction: str):
         
