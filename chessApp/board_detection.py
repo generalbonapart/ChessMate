@@ -28,11 +28,11 @@ def capture_image():
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    return img
-    # pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
-    # pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    # M = cv2.getPerspectiveTransform(pts1,pts2)
-    # return cv2.warpPerspective(img,M,(800,800))
+    pts1 = np.float32([[299, 48],[1010, 19],[333, 739],[1023, 718]])
+    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    image = cv2.warpPerspective(img,M,(800,800))
+    return image
 
 def square_occupancy_init():
     global board_state
