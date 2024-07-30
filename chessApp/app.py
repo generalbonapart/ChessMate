@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import secrets
 import string
 from lichess_api import launch_game, is_game_active
-from read_board import init_board_control, lcd_display_key
+from read_board import init_board_control, lcd_display_key, start_threads
 from models import GameParams
 
 def generate_random_string(length=8):
@@ -37,10 +37,12 @@ def handle_game_start(request):
     
     user_api_token = session.get('lichess_token')
     if user_api_token:
-        init_board_control(params.time, params.level)
+        # Initialize all board modules
+        init_board_control()
         # Launch lichess game via API
         launch_game(params, user_api_token)
-        #game_in_progress = True
+        # Launch the board threads 
+        start_threads(params.time, params.level)
         return redirect(url_for('index'))
     else:
         response = jsonify({'error': 'The lichess API token is missing'})

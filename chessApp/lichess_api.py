@@ -119,7 +119,7 @@ def post_user_moves():
                 while game_not_over:
                     if move_done.acquire(timeout=1):
                         break
-
+                    
                 if user_move == 'q':
                     resign_game()
                     game_not_over = False
@@ -173,10 +173,11 @@ def launch_game(parameters: GameParams, user_api_token):
     if client is None:
         client = berserk.Client(session=session)
     game_not_over = True
+    move_done.acquire(blocking=False)
+    move_accepted.clear()
     send_challenge(parameters)
     thread_post_moves = threading.Thread(target=post_user_moves)
     thread_main_game = threading.Thread(target=main_thread)
-    #move_accepted = threading.Event()
     
     main_signal = True
     print("Starting game")

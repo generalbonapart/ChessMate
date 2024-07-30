@@ -122,9 +122,11 @@ def main_thread():
         previous_move = user_move
         if user_move == 'q':
             break
-            
+        
+        print("Move passed to lichess")   
         move_accepted.wait()
         move_accepted.clear()
+        print("Move accepted by lichess")
         
         if is_move_legal():
             chess_board_inst.move_piece_string(user_move)
@@ -165,21 +167,22 @@ def kill_threads():
     
     print("Killed board threads")  
 
-def init_board_control(time, level):
-    global main_signal, thread1, thread2
+def init_board_control():
     kill_threads()
     lcd_init()
     buttons_init()
     trolley_init()
     board_detection_init()
+    
+    
+def start_threads(time, level):
+    global main_signal, thread1, thread2
     thread1 = threading.Thread(target=main_thread)
     thread2 = threading.Thread(target=lcd_thread, args=(time, level))
     thread1.start()
     thread2.start()
     main_signal = True
     
-
-
 if __name__ == "__main__":
     init_board_control()
 
