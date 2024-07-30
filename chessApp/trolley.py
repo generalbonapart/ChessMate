@@ -43,8 +43,8 @@ class Trolley:
         self.free_acceleration = free_acceleration
         self.loaded_speed = loaded_speed
         self.loaded_acceleration = loaded_acceleration
-        self.currentX = 0
-        self.currentY = 0
+        self.currentX = 7
+        self.currentY = 7
         self.stallguard_threshold_1 = 250
         self.stallguard_threshold_2 = 250
         self.castling = None
@@ -89,7 +89,7 @@ class Trolley:
         self.tmc2.set_motor_enabled(True)
         
         # Move to chess origin
-        self.move_in_direction(0.4, "XRIGHT")
+        self.move_in_direction(0.6, "XLEFT")
 
     def move_in_direction(self, inc, direction: str):
         
