@@ -282,7 +282,7 @@ class TMC_2209:
             return
         self._sg_callback()
 
-    def take_me_home(self, threshold, direction: int = Direction.CCW):
+    def take_me_home(self, threshold, direction: int = Direction.CW):
 
         self.tmc_logger.log(f"Testing homing with threshold = {threshold}", Loglevel.INFO)
         self.set_spreadcycle(0)
