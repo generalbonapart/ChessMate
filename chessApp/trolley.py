@@ -257,7 +257,6 @@ class Trolley:
 
     def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
-        chess_board_inst.move_piece(move)
         if rook_castling:
             print(move_string)
         # Bring the trolley to the piece
@@ -274,7 +273,8 @@ class Trolley:
 
         self.currentX = move.endX
         self.currentY = move.endY
-
+        chess_board_inst.move_piece(move)
+        
         if self.castling is not None:
             print(self.castling)
             self.make_move(self.castling[2], rook_castling = True)
