@@ -116,9 +116,10 @@ def post_user_moves():
     while game_not_over:
         for update in client.board.stream_incoming_events():
             if is_my_turn(update) and game_not_over:
-                move_done.acquire(timeout=3)
-                if not game_not_over:
-                    break
+                while game_not_over:
+                    if move_done.acquire(timeout=1):
+                        break
+
                 if user_move == 'q':
                     resign_game()
                     game_not_over = False
