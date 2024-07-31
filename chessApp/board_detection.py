@@ -129,7 +129,7 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                 square_occupied = 2
 
             if w >= min_width and h >= min_height:
-                piece_rect = (x, y, x + w, y + h)
+                piece_rect = [(x, y), (x + w, y + h)]
                 overlap_area = get_overlap_area(piece_rect, square)
                 piece_area = w * h
                 if overlap_area / piece_area > 0.7:
