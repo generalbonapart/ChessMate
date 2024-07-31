@@ -101,6 +101,8 @@ def main_thread():
         button_led_ON()
         # Read the button status
         while(GPIO.input(RPi_I2C_driver.BUTTON_PIN) != GPIO.LOW):
+            if not is_game_active():
+                break
             sleep(0.1)
         
         # Stop the button light for user

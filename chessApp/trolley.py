@@ -280,6 +280,7 @@ class Trolley:
             self.make_move(self.castling[2], rook_castling = True)
 
     def take_initial_position(self):
+        chess_board_inst.board = chess_board_inst.create_starting_board()
         free_move = Move(self.currentX, self.currentY, 3, 7)
         self.set_speed_acceleration(loaded=False)
         self.calculate_movement(free_move)
@@ -310,9 +311,7 @@ class Trolley:
         GPIO.output(MAGNET_PIN, GPIO.LOW)
 
     def __del__(self):
-        free_move = Move(self.currentX, self.currentY, 0, 0)
-        self.set_speed_acceleration(loaded=False)
-        self.calculate_movement(free_move)
+        self.take_initial_position()
         GPIO.cleanup(MAGNET_PIN)
 
 
