@@ -13,7 +13,7 @@ trolley = None
 mylcd = None
 illegal_move = False
 main_signal = True
-
+debug = False
 thread1 = None
 thread2 = None
 
@@ -111,12 +111,12 @@ def main_thread():
             mylcd.lcd_clear()
             
         user_move = get_user_move()
-        feedback = input(f'{user_move} ? ')
-        if feedback == 'y':
-            pass
-        else:
-            user_move = feedback
-        #user_move = input("User move: ")
+        if debug:
+            feedback = input(f'{user_move} ? ')
+            if feedback == 'y':
+                pass
+            else:
+                user_move = feedback
 
         add_user_move(user_move)
         previous_move = user_move
@@ -167,12 +167,14 @@ def kill_threads():
     
     print("Killed board threads")  
 
-def init_board_control():
+def init_board_control(debug_flag):
     kill_threads()
     lcd_init()
     buttons_init()
     trolley_init()
     board_detection_init()
+    global debug
+    debug = debug_flag
     
     
 def start_threads(time, level):

@@ -1,10 +1,11 @@
 import os
-import subprocess
+import sys
+import random
+import secrets
+import string
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-import secrets
-import string
 from lichess_api import launch_game, is_game_active
 from read_board import init_board_control, lcd_display_key, start_threads
 from models import GameParams
@@ -13,19 +14,27 @@ def generate_random_string(length=8):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
 
+SECRET_KEYS = ['fuck SFU', 'PEng shit', 'Shervin cool', 'Eat in a lab', 'NO ethics', 'lab=starbucks']
+
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
 load_dotenv()
 
+# Check if any arguments were passed
+if len(sys.argv) > 1:
+    debug = bool(int(sys.argv[1]))
+else:
+    debug = False
+    
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['LICHESS_CLIENT_ID'] =  os.getenv("LICHESS_CLIENT_ID")
 app.config['LICHESS_AUTHORIZE_URL'] = f"{LICHESS_HOST}/oauth"
 app.config['LICHESS_ACCESS_TOKEN_URL'] = f"{LICHESS_HOST}/api/token"
 lcd_secret = None
-#game_in_progress = False
+debug = False
 oauth = OAuth(app)
 oauth.register('lichess', client_kwargs={"code_challenge_method": "S256"})
-    
+
 def handle_game_start(request):
     #global game_in_progress
     
@@ -38,7 +47,7 @@ def handle_game_start(request):
     user_api_token = session.get('lichess_token')
     if user_api_token:
         # Initialize all board modules
-        init_board_control()
+        init_board_control(debug)
         # Launch lichess game via API
         launch_game(params, user_api_token)
         # Launch the board threads 
@@ -75,8 +84,9 @@ def auth():
 def index():
     global lcd_secret
         
-    if 'led_token' not in session:
-        lcd_secret = generate_random_string()
+    if 'led_token' not in session and not is_game_active():
+        #lcd_secret = generate_random_string()
+        lcd_secret = SECRET_KEYS[random.randint(0,len(SECRET_KEYS)-1)]
         print(lcd_secret)
         lcd_display_key(lcd_secret)
         return redirect(url_for('auth'))
@@ -105,4 +115,5 @@ def authorize():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port = 80, debug = True)
+
+    app.run(host='0.0.0.0', port = 80)
