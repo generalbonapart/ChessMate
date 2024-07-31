@@ -82,7 +82,7 @@ def get_combined_mask(image):
     upper_black = np.array([120, 100, 60])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([20, 15, 145])
+    lower_white = np.array([25, 15, 145])
     upper_white = np.array([100, 95, 250])
 
     # Create masks for black and white pieces
@@ -119,7 +119,8 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                 bottom_left_corner = (x, y + h)
                 bottom_right_corner = (x + w, y + h)
 
-                if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
+                if (is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square) 
+                or is_point_in_square(top_left_corner, square) or is_point_in_square(top_right_corner, square)) :
                     square_occupied = 1 # White piece
                     break
 
