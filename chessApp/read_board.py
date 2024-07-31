@@ -70,7 +70,7 @@ def lcd_display_result():
         mylcd.lcd_display_string_pos(result, 1, 6)
         mylcd.lcd_display_string_pos("(checkmate)", 3, 4)
     else:
-        mylcd.lcd_display_string_pos("Game over", 2, 3)   
+        mylcd.lcd_display_string_pos(result, 2, 3)   
     
 def lcd_illegal_move(move):
     mylcd.lcd_display_string(f"{move} is illegal", 1)
