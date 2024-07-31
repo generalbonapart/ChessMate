@@ -109,7 +109,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/reset', methods=['POST'])
-def logout():
+def reset():
     os._exit(1)
 
 @app.route('/authorize')
