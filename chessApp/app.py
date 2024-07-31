@@ -108,9 +108,9 @@ def logout():
     session.pop('lichess_token', None)
     return redirect(url_for('login'))
 
-@app.route('/reset', methods=['POST'])
+@app.route('/reset')
 def reset():
-    os._exit(1)
+    os._exit(0)
 
 @app.route('/authorize')
 def authorize():
