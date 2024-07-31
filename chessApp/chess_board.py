@@ -69,10 +69,4 @@ class ChessBoard:
         else:
             return False
         
-
 chess_board_inst = ChessBoard()
-# board.display_board()
-# move = Move(3, 1, 3, 3)
-# board.move_piece(move)
-# board.display_board()
-# print(board.get_piece(3,7))

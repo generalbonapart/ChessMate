@@ -10,6 +10,7 @@ IMAGE = 'cv/board.jpg'
 CURDIR = os.getcwd()
 OUTPUT_FILE = os.path.join(CURDIR, IMAGE)
 points_file = 'cv/points.json'
+previous_board_state = None
 
 def capture_image():
     command = ["rpicam-jpeg", "--timeout", "10", "--output", OUTPUT_FILE]
@@ -27,11 +28,11 @@ def capture_image():
 
     # resize image
     img = cv2.resize(image_raw, dim, interpolation=cv2.INTER_AREA)
-    return img
-    # pts1 = np.float32([[505, 65],[1608, 18],[592, 1228],[1707, 1097]])
-    # pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
-    # M = cv2.getPerspectiveTransform(pts1,pts2)
-    # return cv2.warpPerspective(img,M,(800,800))
+    pts1 = np.float32([[299, 48],[1010, 19],[333, 739],[1023, 718]])
+    pts2 = np.float32([[0,0],[800,0],[0,800],[800,800]])
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    image = cv2.warpPerspective(img,M,(800,800))
+    return image
 
 def square_occupancy_init():
     global board_state
@@ -73,14 +74,16 @@ def find_squares(points, row_count, col_count):
 def get_combined_mask(image):
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    hsv[:, :, 2] = clahe.apply(hsv[:, :, 2])
 
     # Define color range for black pieces (these ranges might need adjustment)
-    lower_black = np.array([95, 30, 15])
-    upper_black = np.array([115, 100, 80])
+    lower_black = np.array([80, 30, 0])
+    upper_black = np.array([120, 100, 60])
 
     # Define color range for white pieces (these ranges might need adjustment)
-    lower_white = np.array([30, 15, 145])
-    upper_white = np.array([90, 80, 230])
+    lower_white = np.array([25, 15, 145])
+    upper_white = np.array([100, 95, 250])
 
     # Create masks for black and white pieces
     mask_black = cv2.inRange(hsv, lower_black, upper_black)
@@ -93,6 +96,19 @@ def is_point_in_square(point, square):
     top_left, top_right, bottom_left, _ = square
     return top_left[0] <= x <= top_right[0] and top_left[1] <= y <= bottom_left[1]
 
+def get_overlap_area(rect, square):
+    (x1, y1), (x2, y2) = rect
+    top_left, top_right, bottom_left, bottom_right = square
+
+    overlap_x1 = max(x1, top_left[0])
+    overlap_y1 = max(y1, top_left[1])
+    overlap_x2 = min(x2, top_right[0])
+    overlap_y2 = min(y2, bottom_left[1])
+
+    overlap_width = max(0, overlap_x2 - overlap_x1)
+    overlap_height = max(0, overlap_y2 - overlap_y1)
+    
+    return overlap_width * overlap_height
 def detect_square_occupation(image, mask_white, mask_black, squares):
     contours_white, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -113,10 +129,10 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                 square_occupied = 2
 
             if w >= min_width and h >= min_height:
-                bottom_left_corner = (x, y + h)
-                bottom_right_corner = (x + w, y + h)
-
-                if is_point_in_square(bottom_left_corner, square) or is_point_in_square(bottom_right_corner, square):
+                piece_rect = [(x, y), (x + w, y + h)]
+                overlap_area = get_overlap_area(piece_rect, square)
+                piece_area = w * h
+                if overlap_area / piece_area > 0.7:
                     square_occupied = 1 # White piece
                     break
 
@@ -146,11 +162,15 @@ def compare_board_state(previous_state, current_state):
                 differences.append((row, col, previous_state[row][col], current_state[row][col]))
     return differences
 
-def find_piece_movement(previous_state, current_state):
+def find_piece_movement(new_board_state):
+    global board_state
+    differences = compare_board_state(board_state, new_board_state)
 
-    differences = compare_board_state(previous_state, current_state)
+    if len(differences) == 0:
+        return 'q', board_state
+
     # For piece movement or piece capture
-    if len(differences) == 2:
+    elif len(differences) == 2:
         start_pos = None
         end_pos = None
         start_piece = None
@@ -174,10 +194,10 @@ def find_piece_movement(previous_state, current_state):
 
             # Print the piece type
             piece_type = "White" if start_piece == 1 else "Black"
-            return move, current_state
+            return move, new_board_state
 
     # Castling detection
-    if len(differences) == 4:
+    elif len(differences) == 4:
         king_start_pos = (7, 4)
         kingside_rook_start_pos = (7, 7)
         queenside_rook_start_pos = (7, 0)
@@ -187,16 +207,16 @@ def find_piece_movement(previous_state, current_state):
         if king_start_pos in start_positions and any(rook_start_pos in start_positions for rook_start_pos in [kingside_rook_start_pos, queenside_rook_start_pos]):
             if (7, 6) in end_positions and (7, 5) in end_positions:  # Kingside castling
                 move = 'e1g1'
-                return move, current_state
+                return move, new_board_state
             elif (7, 2) in end_positions and (7, 3) in end_positions:  # Queenside castling
                 move = 'e1c1'
-                return move, current_state
+                return move, new_board_state
 
     print("Error: Unable to detect a valid move.")
-    return 'a8a8', current_state
+    return 'a8a8', board_state
 
 def get_user_move():
-    global board_state
+    global board_state, previous_board_state
     # Capture and process the current chessboard image
     chessboard_image = capture_image()
     
@@ -209,12 +229,12 @@ def get_user_move():
     new_board_state = detect_square_occupation(chessboard_image, mask_white, mask_black, squares)
     for row in new_board_state:
         print(row)
-
-    move, new_board_state = find_piece_movement(board_state, new_board_state)
+    move, new_board_state = find_piece_movement(new_board_state)
 
     if move is  None: 
         print("Error: Unable to detect a valid move.")
     else:
+        previous_board_state = board_state
         board_state = new_board_state
             
     return move
@@ -222,6 +242,10 @@ def get_user_move():
 def board_detection_init():
     square_occupancy_init()
 
+def report_illegal_move():
+    global board_state, previous_board_state
+    board_state = previous_board_state
+    
 def report_bot_move(move):
     global board_state
     start = move[0:2]

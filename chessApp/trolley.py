@@ -43,8 +43,8 @@ class Trolley:
         self.free_acceleration = free_acceleration
         self.loaded_speed = loaded_speed
         self.loaded_acceleration = loaded_acceleration
-        self.currentX = 0
-        self.currentY = 0
+        self.currentX = 7
+        self.currentY = 7
         self.stallguard_threshold_1 = 250
         self.stallguard_threshold_2 = 250
         self.castling = None
@@ -69,6 +69,7 @@ class Trolley:
             tmc.set_motor_enabled(True)
             
         self.move_to_chess_origin()
+        self.take_initial_position()
 
     def move_to_chess_origin(self):
         
@@ -77,8 +78,8 @@ class Trolley:
             tmc.set_max_speed(self.free_speed)
             
         #Find one edge
-        self.move_in_direction(1, "DUPR")
-        self.tmc2.run_to_position_steps_threaded(-10000, MovementAbsRel.RELATIVE)
+        self.move_in_direction(1, "DDOWNL")
+        self.tmc2.run_to_position_steps_threaded(10000, MovementAbsRel.RELATIVE)
         self.tmc1.take_me_home(threshold=self.stallguard_threshold_1)
         self.tmc2.stop()
         self.tmc2.set_motor_enabled(False)
@@ -88,7 +89,7 @@ class Trolley:
         self.tmc2.set_motor_enabled(True)
         
         # Move to chess origin
-        self.move_in_direction(0.4, "XRIGHT")
+        self.move_in_direction(0.75, "XLEFT")
 
     def move_in_direction(self, inc, direction: str):
         
@@ -256,7 +257,6 @@ class Trolley:
 
     def make_move(self, move_string, rook_castling = False):
         move = self.chess_to_cartesian(move_string)
-        chess_board_inst.move_piece(move)
         if rook_castling:
             print(move_string)
         # Bring the trolley to the piece
@@ -273,11 +273,20 @@ class Trolley:
 
         self.currentX = move.endX
         self.currentY = move.endY
-
+        chess_board_inst.move_piece(move)
+        
         if self.castling is not None:
             print(self.castling)
             self.make_move(self.castling[2], rook_castling = True)
 
+    def take_initial_position(self):
+        chess_board_inst.board = chess_board_inst.create_starting_board()
+        free_move = Move(self.currentX, self.currentY, 3, 7)
+        self.set_speed_acceleration(loaded=False)
+        self.calculate_movement(free_move)
+        self.currentX = 3
+        self.currentY = 7
+        
     def demo_test(self):
         # Prompt the user for a direction
         while(True):
@@ -302,9 +311,7 @@ class Trolley:
         GPIO.output(MAGNET_PIN, GPIO.LOW)
 
     def __del__(self):
-        free_move = Move(self.currentX, self.currentY, 0, 0)
-        self.set_speed_acceleration(loaded=False)
-        self.calculate_movement(free_move)
+        self.take_initial_position()
         GPIO.cleanup(MAGNET_PIN)
 
 

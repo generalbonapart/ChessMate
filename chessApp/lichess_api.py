@@ -14,14 +14,20 @@ def patched_json(self, **kwargs):
 Response.json = patched_json
 
 URL = 'https://lichess.org/'
-game_not_over = True
+game_not_over = False
 game_status = ''
 user_move = None
 game_id = None
 client = None
+session = None
 move_accepted = threading.Event()
+move_done = threading.Semaphore(0)
 move_legal = False
 game_state = None
+
+thread_post_moves = None
+thread_main_game = None
+main_signal = True
 
 # Function to create a new game with a bot
 def send_challenge(params: GameParams):
@@ -88,6 +94,7 @@ def get_game_status():
 def add_user_move(move):
     global user_move
     user_move = move
+    move_done.release()
 
 def is_game_active():
     return game_not_over
@@ -104,15 +111,17 @@ def is_my_turn(update):
     return False
 
 # Function to post user moves
-def post_user_moves(stop_threads):
+def post_user_moves():
     global game_not_over, user_move, move_accepted, move_legal
     while game_not_over:
-        if stop_threads():
-            break
         for update in client.board.stream_incoming_events():
             if is_my_turn(update) and game_not_over:
-                while not user_move:
-                    time.sleep(0.01)
+                while game_not_over:
+                    if move_done.acquire(timeout=1):
+                        break
+                    else:
+                        print("lichess: No move done")
+                    
                 if user_move == 'q':
                     resign_game()
                     game_not_over = False
@@ -127,7 +136,9 @@ def post_user_moves(stop_threads):
                 user_move = None
                 break
         #time.sleep(3)
-
+    while (main_signal):
+        time.sleep(1)
+        
 def main_thread():
     global client, game_not_over, game_status, game_state
     while game_not_over:
@@ -137,24 +148,40 @@ def main_thread():
             game_status = handle_game_state_update(update)
             game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
             break
-        #time.sleep(1)
 
-    #time.sleep(3)
-    print("Game Over!")
-    game_not_over = True
+    print(f"Game Over! Status: {game_status}")
     client = None
+    while (main_signal):
+        time.sleep(1)
 
-def launch_game(parameters: GameParams, user_api_token):
-    global move_accepted, move_legal
-    session = berserk.TokenSession(user_api_token)
-    global client
-    client = berserk.Client(session=session)
-    send_challenge(parameters)
-    stop_threads = False
-    thread_post_moves = threading.Thread(target=post_user_moves, args=(lambda: stop_threads, ))
-    thread_main_game = threading.Thread(target=main_thread)
-    #move_accepted = threading.Event()
+def kill_threads():
+    global thread_main_game, thread_post_moves, main_signal
+    main_signal = False
+    if thread_main_game is not None:
+        if thread_main_game.is_alive():
+            thread_main_game.join()
+    if thread_post_moves is not None:
+        if thread_post_moves.is_alive():
+            thread_post_moves.join()    
     
+    print("Killed lichess threads") 
+    
+def launch_game(parameters: GameParams, user_api_token):
+    
+    global move_accepted, move_legal, game_not_over, client, session, thread_main_game, thread_post_moves, main_signal
+    kill_threads()
+    if session is None:
+        session = berserk.TokenSession(user_api_token)
+    if client is None:
+        client = berserk.Client(session=session)
+    game_not_over = True
+    move_done.acquire(blocking=False)
+    move_accepted.clear()
+    send_challenge(parameters)
+    thread_post_moves = threading.Thread(target=post_user_moves)
+    thread_main_game = threading.Thread(target=main_thread)
+    
+    main_signal = True
     print("Starting game")
     thread_post_moves.start()
     thread_main_game.start()

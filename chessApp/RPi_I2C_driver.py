@@ -52,7 +52,7 @@ class i2c_device:
 
 # LCD Address
 ADDRESS = 0x27
-BUTTON_PIN = 22
+BUTTON_PIN = 27
 # commands
 LCD_CLEARDISPLAY = 0x01
 LCD_RETURNHOME = 0x02
@@ -189,8 +189,8 @@ class lcd:
 			self.lcd_write(ord(char), Rs)
 
 	def lcd_display_chess_time(self, white_time, black_time):
-		self.lcd_display_string("    White      Black", 1)
-		self.lcd_display_string(f"     {white_time}      {black_time}", 3)
+		self.lcd_display_string("    White    Black", 1)
+		self.lcd_display_string(f"     {white_time}    {black_time}", 3)
 	 
 	def lcd_display_secret_key(self, key):
 		self.lcd_display_string(" Enter a secret key: ", 1)
