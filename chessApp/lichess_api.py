@@ -85,6 +85,24 @@ def get_time_left():
         return (white_seconds, black_seconds)
     return None, None
 
+def get_game_result():
+    url = f"https://lichess.org/game/export/{game_id}"
+    params = {
+        'tags': 'true',  # Include tags like the result
+        'moves': 'false',  # Exclude moves for simplicity
+        'pgnInJson': 'true'  # Get the result in JSON format
+    }
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        game_data = response.json()
+        print(game_data['tags'])
+        result = game_data['tags']['Result']
+        return result
+    else:
+        print(f"Error: Unable to fetch game data (status code {response.status_code})")
+        return None
+    
 def get_game_status():
     if game_state:
         status = game_state['status']
@@ -159,12 +177,14 @@ def kill_threads():
     main_signal = False
     if thread_main_game is not None:
         if thread_main_game.is_alive():
-            thread_main_game.join()
+            thread_main_game.join(timeout=3)
+            if not thread_main_game.is_alive():
+                print("Killed lichess thread_main_game") 
     if thread_post_moves is not None:
         if thread_post_moves.is_alive():
-            thread_post_moves.join()    
-    
-    print("Killed lichess threads") 
+            thread_post_moves.join(timeout=3)
+            if not thread_post_moves.is_alive():
+                print("Killed lichess thread_post_moves")     
     
 def launch_game(parameters: GameParams, user_api_token):
     
