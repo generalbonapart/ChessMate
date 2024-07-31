@@ -85,23 +85,33 @@ def get_time_left():
         return (white_seconds, black_seconds)
     return None, None
 
-def get_game_result():
+def get_game_result(game_id):
     url = f"https://lichess.org/game/export/{game_id}"
     params = {
         'tags': 'true',  # Include tags like the result
         'moves': 'false',  # Exclude moves for simplicity
-        'pgnInJson': 'true'  # Get the result in JSON format
+        'pgnInJson': 'false'  # Get the result in PGN format
     }
     response = requests.get(url, params=params)
-
+    result = ""
     if response.status_code == 200:
-        game_data = response.json()
-        print(game_data['tags'])
-        result = game_data['tags']['Result']
-        return result
+        content = response.text 
+        for line in content.splitlines():
+            if line.startswith("[Result "):
+                result = line.split('"')[1]
+                break
+        
+        if result == "1-0":
+            return "You win"
+        elif result == "0-1":
+            return "You lose"
+        elif result == "1/2-1/2":
+            return "Draw"
+        else:
+            return result
     else:
         print(f"Error: Unable to fetch game data (status code {response.status_code})")
-        return None
+        return result
     
 def get_game_status():
     if game_state:

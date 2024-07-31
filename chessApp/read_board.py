@@ -55,6 +55,23 @@ def lcd_display_key(lcd_secret):
     mylcd.lcd_clear()
     mylcd.lcd_display_secret_key(lcd_secret)
 
+def lcd_display_result():
+    status = get_game_status()
+    result = get_game_result()
+    
+    if status == 'draw':
+        mylcd.lcd_display_string_pos("Draw", 2, 8)
+    elif status == 'resign':
+        mylcd.lcd_display_string_pos("Game resigned", 2, 3)
+    elif status == 'outoftime':
+        mylcd.lcd_display_string_pos(result, 1, 6)
+        mylcd.lcd_display_string_pos("(flag fall)", 3, 4)
+    elif status == 'mate':
+        mylcd.lcd_display_string_pos(result, 1, 6)
+        mylcd.lcd_display_string_pos("(checkmate)", 3, 4)
+    else:
+        mylcd.lcd_display_string_pos("Game over", 2, 3)   
+    
 def lcd_illegal_move(move):
     mylcd.lcd_display_string(f"{move} is illegal", 1)
     mylcd.lcd_display_string("Make a new move", 3)
@@ -93,7 +110,7 @@ def lcd_thread(time, level):
     
     get_game_result()
     mylcd.lcd_clear()
-    mylcd.lcd_display_string_pos(get_game_status(), 2, 5)
+    lcd_display_result()
     sleep(5)
     mylcd.lcd_clear()
     mylcd.lcd_display_string("Start new game", 2)
