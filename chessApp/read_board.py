@@ -108,7 +108,6 @@ def lcd_thread(time, level):
             mylcd.lcd_display_chess_time(white_time, black_time)
         sleep(0.1)
     
-    get_game_result()
     mylcd.lcd_clear()
     lcd_display_result()
     sleep(5)

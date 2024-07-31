@@ -85,7 +85,7 @@ def get_time_left():
         return (white_seconds, black_seconds)
     return None, None
 
-def get_game_result(game_id):
+def get_game_result():
     url = f"https://lichess.org/game/export/{game_id}"
     params = {
         'tags': 'true',  # Include tags like the result
