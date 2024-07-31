@@ -96,17 +96,19 @@ def is_point_in_square(point, square):
     top_left, top_right, bottom_left, _ = square
     return top_left[0] <= x <= top_right[0] and top_left[1] <= y <= bottom_left[1]
 
-def get_overlap_area(rect1, rect2):
-    x1, y1, x2, y2 = rect1
-    a1, b1, a2, b2 = rect2
-    overlap_x1 = max(x1, a1)
-    overlap_y1 = max(y1, b1)
-    overlap_x2 = min(x2, a2)
-    overlap_y2 = min(y2, b2)
+def get_overlap_area(rect, square):
+    (x1, y1), (x2, y2) = rect
+    top_left, top_right, bottom_left, bottom_right = square
+
+    overlap_x1 = max(x1, top_left[0])
+    overlap_y1 = max(y1, top_left[1])
+    overlap_x2 = min(x2, top_right[0])
+    overlap_y2 = min(y2, bottom_left[1])
+
     overlap_width = max(0, overlap_x2 - overlap_x1)
     overlap_height = max(0, overlap_y2 - overlap_y1)
+    
     return overlap_width * overlap_height
-
 def detect_square_occupation(image, mask_white, mask_black, squares):
     contours_white, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours_black, _ = cv2.findContours(mask_black, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
