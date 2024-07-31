@@ -2,7 +2,7 @@ import threading
 from time import sleep
 import RPi_I2C_driver
 from RPi import GPIO
-from lichess_api import add_user_move, get_bot_move, is_game_active, get_game_status, move_accepted, is_move_legal, get_time_left
+from lichess_api import add_user_move, get_bot_move, is_game_active, get_game_status, move_accepted, is_move_legal, get_time_left, get_game_result
 from board_detection import board_detection_init, get_user_move, report_bot_move, report_illegal_move
 from chess_board import *
 from models import GameParams
@@ -29,6 +29,7 @@ def lcd_init():
     global mylcd
     print('Initialising the LCD')
     if mylcd is None:
+        print('Initialising the LCD')
         mylcd = RPi_I2C_driver.lcd()
     
 def buttons_init():
@@ -39,14 +40,39 @@ def buttons_init():
     GPIO.setup(RPi_I2C_driver.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(DOME_BUTTON_LED, GPIO.OUT)
 
+def lcd_welcome_message():
+    lcd_init()
+    mylcd.lcd_clear()
+    mylcd.lcd_display_string_pos(f"Welcome to", 1, 5)
+    mylcd.lcd_display_string_pos(f"ChessMate!", 3, 5)
+    
 def lcd_start_message(level):
+    mylcd.lcd_clear()
     mylcd.lcd_display_string_pos(f"Game set", 1, 5)
     mylcd.lcd_display_string_pos(f"Level {level}", 3, 5)
     
 def lcd_display_key(lcd_secret):
     lcd_init()
+    mylcd.lcd_clear()
     mylcd.lcd_display_secret_key(lcd_secret)
 
+def lcd_display_result():
+    status = get_game_status()
+    result = get_game_result()
+    
+    if status == 'draw':
+        mylcd.lcd_display_string_pos("Draw", 2, 8)
+    elif status == 'resign' or status == 'started':
+        mylcd.lcd_display_string_pos("Game resigned", 2, 3)
+    elif status == 'outoftime':
+        mylcd.lcd_display_string_pos(result, 1, 6)
+        mylcd.lcd_display_string_pos("(flag fall)", 3, 4)
+    elif status == 'mate':
+        mylcd.lcd_display_string_pos(result, 1, 6)
+        mylcd.lcd_display_string_pos("(checkmate)", 3, 4)
+    else:
+        mylcd.lcd_display_string_pos(result, 2, 3)   
+    
 def lcd_illegal_move(move):
     mylcd.lcd_display_string(f"{move} is illegal", 1)
     mylcd.lcd_display_string("Make a new move", 3)
@@ -82,9 +108,9 @@ def lcd_thread(time, level):
 
             mylcd.lcd_display_chess_time(white_time, black_time)
         sleep(0.1)
-
+    
     mylcd.lcd_clear()
-    mylcd.lcd_display_string_pos(get_game_status(), 2, 5)
+    lcd_display_result()
     sleep(5)
     mylcd.lcd_clear()
     mylcd.lcd_display_string("Start new game", 2)
@@ -163,13 +189,15 @@ def kill_threads():
     main_signal = False
     if thread1 is not None:
         if thread1.is_alive():
-            thread1.join()
+            thread1.join(timeout=3)
+            if not thread1.is_alive():
+                print("Killed board thread1")
     if thread2 is not None:
         if thread2.is_alive():
-            thread2.join()    
+            thread2.join(timeout=3)
+            if not thread2.is_alive():
+                print("Killed board thread2")  
     
-    print("Killed board threads")  
-
 def init_board_control(debug_flag):
     kill_threads()
     lcd_init()

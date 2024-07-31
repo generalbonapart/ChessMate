@@ -7,14 +7,14 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from lichess_api import launch_game, is_game_active
-from read_board import init_board_control, lcd_display_key, start_threads
+from read_board import init_board_control, lcd_display_key, start_threads, lcd_init, lcd_welcome_message
 from models import GameParams
 
 def generate_random_string(length=8):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
 
-SECRET_KEYS = ['fuck SFU', 'PEng shit', 'Shervin cool', 'Eat in a lab', 'NO ethics', 'lab=starbucks']
+SECRET_KEYS = ['Shervin cool', 'Eat in a lab', 'NO ethics', 'lab=starbucks']
 
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
 load_dotenv()
@@ -115,5 +115,6 @@ def authorize():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-
+    lcd_init()
+    lcd_welcome_message()
     app.run(host='0.0.0.0', port = 80)
