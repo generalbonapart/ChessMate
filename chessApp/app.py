@@ -108,6 +108,10 @@ def logout():
     session.pop('lichess_token', None)
     return redirect(url_for('login'))
 
+@app.route('/reset', methods=['POST'])
+def logout():
+    os._exit(1)
+
 @app.route('/authorize')
 def authorize():
     token = oauth.lichess.authorize_access_token()

@@ -62,13 +62,14 @@
             </form>
         </div>
 
-        
         <div class="logout-container">
-            <form method="post" action="{{ url_for('logout') }}">
+            <form method="post" action="{{ url_for('logout') }}" style="display: inline;">
                 <button type="submit">Logout</button>
+            </form>
+            <form method="get" action="{{ url_for('reset') }}" style="display: inline;">
+                <button type="submit" style="background-color: red; color: white;">Reset</button>
             </form>
         </div>
     </div>
-    
 </body>
 </html>
