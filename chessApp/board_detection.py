@@ -116,6 +116,8 @@ def detect_square_occupation(image, mask_white, mask_black, squares):
                 square_occupied = 2
 
             if w >= min_width and h >= min_height:
+                top_left_corner = (x, y)
+                top_right_corner = (x + w, y)
                 bottom_left_corner = (x, y + h)
                 bottom_right_corner = (x + w, y + h)
 
