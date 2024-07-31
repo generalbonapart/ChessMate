@@ -117,7 +117,8 @@ def main_thread():
                 pass
             else:
                 user_move = feedback
-
+                
+        print(f'User move: {user_move}')
         add_user_move(user_move)
         previous_move = user_move
         if user_move == 'q':

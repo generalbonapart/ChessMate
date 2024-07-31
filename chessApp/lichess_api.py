@@ -119,6 +119,8 @@ def post_user_moves():
                 while game_not_over:
                     if move_done.acquire(timeout=1):
                         break
+                    else:
+                        print("lichess: No move done")
                     
                 if user_move == 'q':
                     resign_game()
