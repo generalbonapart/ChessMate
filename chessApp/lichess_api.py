@@ -1,3 +1,4 @@
+import os
 import lichess.api
 import berserk
 import time
@@ -52,6 +53,7 @@ def resign_game():
         client.board.resign_game(game_id)
     except requests.exceptions.RequestException as e:
         print("Error:", e)
+        os._exit(1)
 
 # Function to visit the game URL
 def visit_gameURL(game_id):
@@ -64,6 +66,7 @@ def visit_gameURL(game_id):
             print("Failed to visit the URL:", response.status_code)
     except requests.exceptions.RequestException as e:
         print("Error:", e)
+        os._exit(1)
 
 def is_move_legal():
     return move_legal
@@ -142,40 +145,48 @@ def is_my_turn(update):
 def post_user_moves():
     global game_not_over, user_move, move_accepted, move_legal
     while game_not_over:
-        for update in client.board.stream_incoming_events():
-            if is_my_turn(update) and game_not_over:
-                while game_not_over:
-                    if move_done.acquire(timeout=1):
+        try:
+            for update in client.board.stream_incoming_events():
+                if is_my_turn(update) and game_not_over:
+                    while game_not_over:
+                        if move_done.acquire(timeout=1):
+                            break
+                        else:
+                            print("lichess: No move done")
+                        
+                    if user_move == 'q':
+                        resign_game()
+                        game_not_over = False
                         break
-                    else:
-                        print("lichess: No move done")
-                    
-                if user_move == 'q':
-                    resign_game()
-                    game_not_over = False
+                    #print(f"Posting Move {user_move}\n")
+                    try:
+                        client.board.make_move(game_id, user_move)
+                        move_legal = True
+                    except:
+                        move_legal = False
+                    move_accepted.set()
+                    user_move = None
                     break
-                #print(f"Posting Move {user_move}\n")
-                try:
-                    client.board.make_move(game_id, user_move)
-                    move_legal = True
-                except:
-                    move_legal = False
-                move_accepted.set()
-                user_move = None
-                break
-        #time.sleep(3)
+        except Exception as e:
+            print(f"Exception in thread: {e}")
+            os._exit(1)
+
     while (main_signal):
         time.sleep(1)
         
 def main_thread():
     global client, game_not_over, game_status, game_state
     while game_not_over:
-        for update in client.board.stream_game_state(game_id):
-            if 'state' in update:
-                game_state = update['state']              
-            game_status = handle_game_state_update(update)
-            game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
-            break
+        try:
+            for update in client.board.stream_game_state(game_id):
+                if 'state' in update:
+                    game_state = update['state']              
+                game_status = handle_game_state_update(update)
+                game_not_over = False if game_status in ['draw', 'mate', 'resign', 'outoftime'] else True
+                break
+        except Exception as e:
+            print(f"Exception in thread: {e}")
+            os._exit(1)
 
     print(f"Game Over! Status: {game_status}")
     client = None

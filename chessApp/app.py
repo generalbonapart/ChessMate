@@ -14,7 +14,7 @@ def generate_random_string(length=8):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
 
-SECRET_KEYS = ['Shervin cool', 'Eat in a lab', 'NO ethics', 'lab=starbucks']
+SECRET_KEYS = ['Shervin cool', 'NO food', 'NO drinks', 'lab!=starbucks']
 
 LICHESS_HOST = os.getenv("LICHESS_HOST", "https://lichess.org")
 load_dotenv()
@@ -98,7 +98,7 @@ def index():
             return jsonify({'error': 'The game has started already'})
         handle_game_start(request)
 
-    colors = ['white', 'black']
+    colors = ['white']
     difficulties = list(range(1, 9))
 
     return render_template('index.html', colors=colors, difficulties=difficulties)
